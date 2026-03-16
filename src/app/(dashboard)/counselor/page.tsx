@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
 import Link from "next/link";
 import { STUDENT_ROSTER, type StudentDetail } from "@/lib/mock-data";
 
@@ -229,11 +229,34 @@ function GamePlanModal({
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CounselorPage() {
-  const [gamePlans, setGamePlans] = useState<Record<string, GamePlan>>({});
+  const [gamePlans, setGamePlansState] = useState<Record<string, GamePlan>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem("elio:gamePlans") ?? "{}"); } catch { return {}; }
+  });
+  const [doneStudents, setDoneStudentsState] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id));
+    try {
+      const saved = JSON.parse(localStorage.getItem("elio:doneStudents") ?? "null");
+      return saved ? new Set<string>(saved) : new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id));
+    } catch { return new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id)); }
+  });
+
+  const setGamePlans = (val: Record<string, GamePlan> | ((prev: Record<string, GamePlan>) => Record<string, GamePlan>)) => {
+    setGamePlansState((prev) => {
+      const next = typeof val === "function" ? val(prev) : val;
+      if (typeof window !== "undefined") localStorage.setItem("elio:gamePlans", JSON.stringify(next));
+      return next;
+    });
+  };
+  const setDoneStudents = (val: Set<string> | ((prev: Set<string>) => Set<string>)) => {
+    setDoneStudentsState((prev) => {
+      const next = typeof val === "function" ? val(prev) : val;
+      if (typeof window !== "undefined") localStorage.setItem("elio:doneStudents", JSON.stringify([...next]));
+      return next;
+    });
+  };
+
   const [modalStudentId, setModalStudentId] = useState<string | null>(null);
-  const [doneStudents, setDoneStudents] = useState<Set<string>>(
-    () => new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id))
-  );
   const [showDone, setShowDone] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
