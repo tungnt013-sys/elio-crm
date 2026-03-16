@@ -149,8 +149,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [sidebarHidden]);
 
+  const ROLE_DEFAULT_PAGE: Record<Role, string> = {
+    sales: "/sales",
+    sales_view: "/sales",
+    counselor: "/counselor",
+    admin: "/sales",
+  };
+
   const setRole = (r: Role) => {
     setRoleState(r);
+    router.push(ROLE_DEFAULT_PAGE[r]);
   };
 
   const visibleNav = NAV.filter((item) => item.roles.includes(role));
