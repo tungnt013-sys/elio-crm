@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import { getServerUser } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const user = await getServerUser();
   if (user?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -1,22 +1,29 @@
 import { MongoClient } from "mongodb";
 
-const uri = process.env.MONGODB_URI!;
-
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-let clientPromise: Promise<MongoClient>;
+function createClientPromise(): Promise<MongoClient> {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error("MONGODB_URI environment variable is not set");
 
-if (process.env.NODE_ENV === "development") {
-  if (!global._mongoClientPromise) {
-    const client = new MongoClient(uri);
-    global._mongoClientPromise = client.connect();
+  if (process.env.NODE_ENV === "development") {
+    if (!global._mongoClientPromise) {
+      global._mongoClientPromise = new MongoClient(uri).connect();
+    }
+    return global._mongoClientPromise!;
   }
-  clientPromise = global._mongoClientPromise!;
-} else {
-  const client = new MongoClient(uri);
-  clientPromise = client.connect();
+  return new MongoClient(uri).connect();
 }
+
+// Lazily connect — resolved at request time, not at module load / build time
+let _promise: Promise<MongoClient> | null = null;
+const clientPromise: Promise<MongoClient> = new Proxy({} as Promise<MongoClient>, {
+  get(_t, prop) {
+    if (!_promise) _promise = createClientPromise();
+    return (_promise as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
 
 export default clientPromise;
