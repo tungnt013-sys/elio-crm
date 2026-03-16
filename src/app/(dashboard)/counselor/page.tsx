@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { STUDENT_ROSTER, type StudentDetail } from "@/lib/mock-data";
@@ -54,6 +55,8 @@ function GamePlanModal({
   const [flags, setFlags] = useState<string[]>(existing?.flags ?? student.issues ?? []);
   const [flagDraft, setFlagDraft] = useState("");
   const [confirmDone, setConfirmDone] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const addFlag = () => {
     const trimmed = flagDraft.trim();
@@ -76,7 +79,8 @@ function GamePlanModal({
 
   const wordCount = keyNotes.split(/\s+/).filter(Boolean).length;
 
-  return (
+  if (!mounted) return null;
+  return createPortal(
     <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} onClick={onClose} />
       <div style={{
@@ -273,7 +277,8 @@ function GamePlanModal({
           <button className="btn" onClick={() => onSave({ keyNotes, items, flags })}>Save Game Plan</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
