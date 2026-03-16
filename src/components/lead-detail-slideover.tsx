@@ -143,7 +143,7 @@ function formatHours(h: number): string {
   return rem > 0 ? `${d}d ${rem}h` : `${d}d`;
 }
 
-const APPOINTMENT_COUNSELORS = ["Lâm Đức", "Thu Phương", "Thanh Tùng"];
+// Counselors loaded from DB at runtime (see useCounselorUsers hook below)
 
 const STAGE_ORDER: Record<string, number> = {
   S1: 1, S2: 2, S3: 3, S4: 4, S5: 5, S6: 6, S7: 7, S8: 8, S9: 9, S10: 10, S11: 11, S12: 12, S13: 13,
@@ -192,11 +192,22 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
   const [consultantDraft, setConsultantDraft] = useState(lead.consultantNotes || "");
   const [editingConsultantNotes, setEditingConsultantNotes] = useState(false);
 
+  // Counselors from DB
+  const [counselorUsers, setCounselorUsers] = useState<string[]>([]);
+  useEffect(() => {
+    fetch("/api/users?role=COUNSELOR")
+      .then((r) => r.json())
+      .then((data: { name: string }[]) => {
+        if (Array.isArray(data) && data.length > 0) setCounselorUsers(data.map((u) => u.name));
+      })
+      .catch(() => {});
+  }, []);
+
   // Appointment modal state
   const [showApptModal, setShowApptModal] = useState(false);
   const [apptDate, setApptDate] = useState("");
   const [apptTime, setApptTime] = useState("");
-  const [apptCounselor, setApptCounselor] = useState(APPOINTMENT_COUNSELORS[0]);
+  const [apptCounselor, setApptCounselor] = useState(lead.appointmentCounselor || "");
 
   // Automation email modal state
   type AutomationModal = {
@@ -357,7 +368,7 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
                   )}
                   <button
                     className="btn btn-sm btn-ghost"
-                    onClick={() => { setApptDate(lead.appointmentDate || ""); setApptTime(lead.appointmentTime || ""); setApptCounselor(lead.appointmentCounselor || APPOINTMENT_COUNSELORS[0]); setShowApptModal(true); }}
+                    onClick={() => { setApptDate(lead.appointmentDate || ""); setApptTime(lead.appointmentTime || ""); setApptCounselor(lead.appointmentCounselor || counselorUsers[0] || ""); setShowApptModal(true); }}
                     style={{ fontSize: 11 }}
                   >
                     {lead.appointmentDate ? "Edit" : "Add Details"}
@@ -512,7 +523,7 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
                   if (newStatus.startsWith("S4 ")) {
                     setApptDate("");
                     setApptTime("");
-                    setApptCounselor(APPOINTMENT_COUNSELORS[0]);
+                    setApptCounselor(counselorUsers[0] || "");
                     setShowApptModal(true);
                   }
                   fireAutomations(newStatus);
@@ -850,7 +861,10 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
                   onChange={(e) => setApptCounselor(e.target.value)}
                   style={{ width: "100%" }}
                 >
-                  {APPOINTMENT_COUNSELORS.map((name) => (
+                  {counselorUsers.length === 0 && (
+                    <option value="" disabled>Loading...</option>
+                  )}
+                  {counselorUsers.map((name) => (
                     <option key={name} value={name}>{name}</option>
                   ))}
                 </select>

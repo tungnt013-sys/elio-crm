@@ -736,19 +736,18 @@ export default function CounselorPage() {
                 onMouseLeave={(e) => (e.currentTarget.style.background = "")}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontWeight: 500, fontSize: 13 }}>{student.fullName}</span>
+                  <button
+                    className="btn-ghost"
+                    onClick={(e) => { e.stopPropagation(); setSlideoverStudentId(student.id); }}
+                    style={{ fontWeight: 500, fontSize: 13, background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--ink)", textDecoration: "underline", textDecorationColor: "var(--line-strong)", textUnderlineOffset: 2 }}
+                  >
+                    {student.fullName}
+                  </button>
                   <span className={`badge ${BADGE_CLASS[student.group]}`}>{student.level}</span>
                   <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Assigned to {student.assignedTo}</span>
                   {student.issues.slice(0, 1).map((flag, i) => (
                     <span key={i} style={{ fontSize: 11, color: "var(--danger)" }}>⚑ {flag}</span>
                   ))}
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={(e) => { e.stopPropagation(); setSlideoverStudentId(student.id); }}
-                    style={{ fontSize: 11, color: "var(--ink-3)", marginLeft: 2 }}
-                  >
-                    Background Details →
-                  </button>
                 </div>
               </div>
             ))}
