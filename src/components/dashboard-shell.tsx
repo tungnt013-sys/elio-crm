@@ -176,7 +176,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <span className="brand-text">Elio CRM</span>
           </div>
 
-          <nav className="nav">
+          {visibleNav.length > 1 && <nav className="nav">
             {visibleNav.map((item) => {
               const showSection = item.section && item.section !== lastSection;
               if (item.section) lastSection = item.section;
@@ -191,7 +191,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </div>
               );
             })}
-          </nav>
+          </nav>}
 
           <div className="sidebar-footer">
             <div className="sidebar-user" onClick={() => signOut({ callbackUrl: "/login" })} style={{ cursor: "pointer" }}>

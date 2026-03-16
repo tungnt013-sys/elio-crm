@@ -4,6 +4,14 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
+const IS_DEV = process.env.NODE_ENV === "development";
+
+const DEV_USERS = [
+  { email: "tung@elio.education",    name: "Tùng (Admin)" },
+  { email: "hang.nm@elio.education", name: "Hằng (Sales)" },
+  { email: "chi.tm@elio.education",  name: "Chi (Sales View)" },
+];
+
 function LoginContent() {
   const params = useSearchParams();
   const error = params.get("error");
@@ -39,6 +47,26 @@ function LoginContent() {
           </svg>
           Sign in with Google
         </button>
+
+        {IS_DEV && (
+          <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+            <p style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "center", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Dev login
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {DEV_USERS.map((u) => (
+                <button
+                  key={u.email}
+                  className="btn btn-ghost"
+                  style={{ fontSize: 13, justifyContent: "flex-start", padding: "6px 10px" }}
+                  onClick={() => signIn("dev", { email: u.email, callbackUrl: "/sales" })}
+                >
+                  {u.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

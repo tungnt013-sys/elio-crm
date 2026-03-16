@@ -547,11 +547,9 @@ export default function CounselorPage() {
   return (
     <section style={{ display: "grid", gap: 20 }}>
       {/* ── Header + Tabs ─────────────────────────────────────────────── */}
-      {/* Tab bar hidden when only My Students exists (no S6 leads) */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <h1 className="page-title" style={{ margin: 0 }}>Counselor Dashboard</h1>
-        {s6Count > 0 && (
-          <div style={{ display: "flex", gap: 4, background: "var(--bg-2)", padding: 3, borderRadius: "var(--r-md)" }}>
+        <div style={{ display: "flex", gap: 4, background: "var(--bg-2)", padding: 3, borderRadius: "var(--r-md)" }}>
             {([
               { key: "students"    as "students" | "prospecting", label: "My Students",           badge: undefined as number | undefined },
               { key: "prospecting" as "students" | "prospecting", label: "Prospecting Students", badge: s6Count as number | undefined },
@@ -583,7 +581,6 @@ export default function CounselorPage() {
               </button>
             ))}
           </div>
-        )}
       </div>
 
       {activeTab === "prospecting" && (
