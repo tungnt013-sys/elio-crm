@@ -657,15 +657,14 @@ export default function CounselorPage() {
                             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 150ms", flexShrink: 0, color: "var(--ink-3)" }}>
                               <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            <Link
-                              href={`/students/${student.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              style={{ fontWeight: 600, fontSize: 12, color: "var(--ink)", textDecoration: "none" }}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setModalStudentId(student.id); }}
+                              style={{ fontWeight: 600, fontSize: 12, color: "var(--ink)", background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "none" }}
                               onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
                               onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
                             >
                               {student.fullName}
-                            </Link>
+                            </button>
                             <span style={{ fontSize: 11, color: "var(--ink-3)" }}>
                               {items.length} task{items.length !== 1 ? "s" : ""}
                             </span>
