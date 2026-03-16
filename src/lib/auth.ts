@@ -12,7 +12,7 @@ const DEV_USERS = [
   { email: "chi.tm@elio.education",  name: "Chi",    role: "SALES_VIEW" as UserRole },
 ];
 
-const devProvider = process.env.NODE_ENV === "development"
+const devProvider = process.env.NEXT_PUBLIC_DEV_LOGIN === "true"
   ? [Credentials({
       id: "dev",
       name: "Dev Login",
