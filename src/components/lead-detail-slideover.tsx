@@ -218,7 +218,7 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
     const vars = {
       studentName: lead.studentName,
       parentName: lead.parentName,
-      grade: String(lead.grade ?? ""),
+      grade: String(lead.gradeLevel ?? ""),
       school: lead.school ?? "",
       status: newStatus.replace(/^S\d+ - /, ""),
       counselorName: lead.appointmentCounselor ?? "",

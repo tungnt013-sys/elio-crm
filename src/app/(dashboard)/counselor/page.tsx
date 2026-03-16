@@ -328,7 +328,7 @@ function ProspectingTab({ submitterName }: { submitterName: string }) {
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>{lead.studentName}</span>
-                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Grade {lead.grade}</span>
+                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Grade {lead.gradeLevel}</span>
                 <span style={{ fontSize: 12, color: "var(--ink-3)" }}>·</span>
                 <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{lead.school}</span>
                 <span style={{
@@ -378,7 +378,7 @@ function ProspectingTab({ submitterName }: { submitterName: string }) {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
                   <span style={{ fontWeight: 600, fontSize: 13 }}>{lead.studentName}</span>
-                  <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Grade {lead.grade} · {lead.school}</span>
+                  <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Grade {lead.gradeLevel} · {lead.school}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, flexWrap: "wrap" }}>
                   <span style={{
