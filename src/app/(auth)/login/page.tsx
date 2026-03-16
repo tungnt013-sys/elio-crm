@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-const IS_DEV = process.env.NODE_ENV === "development";
+const IS_DEV = process.env.NEXT_PUBLIC_DEV_LOGIN === "true";
 
 const DEV_USERS = [
   { email: "tung@elio.education",    name: "Tùng (Admin)" },
