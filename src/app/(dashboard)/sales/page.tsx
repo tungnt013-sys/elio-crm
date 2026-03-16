@@ -321,7 +321,7 @@ export default function SalesPage() {
                   }}>
                     <div style={{ flex: 1, minWidth: 180 }}>
                       <span style={{ fontWeight: 600, fontSize: 13 }}>{lead?.studentName ?? leadId}</span>
-                      {lead && <span style={{ fontSize: 12, color: "var(--ink-3)", marginLeft: 8 }}>Grade {lead.grade} · {lead.school}</span>}
+                      {lead && <span style={{ fontSize: 12, color: "var(--ink-3)", marginLeft: 8 }}>Grade {lead.gradeLevel} · {lead.school}</span>}
                     </div>
                     <a
                       href={p.url}
