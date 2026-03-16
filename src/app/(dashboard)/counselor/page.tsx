@@ -51,6 +51,7 @@ function GamePlanModal({
   onClose: () => void;
 }) {
   const [keyNotes, setKeyNotes] = useState(existing?.keyNotes ?? "");
+  const [editingKeyNotes, setEditingKeyNotes] = useState(!existing?.keyNotes);
   const [items, setItems] = useState<GamePlanItem[]>(existing?.items ?? []);
   const [flags, setFlags] = useState<string[]>(existing?.flags ?? student.issues ?? []);
   const [flagDraft, setFlagDraft] = useState("");
@@ -121,17 +122,38 @@ function GamePlanModal({
 
         <div style={{ marginBottom: 20 }}>
           <div className="detail-label" style={{ marginBottom: 6 }}>Key Notes</div>
-          <textarea
-            value={keyNotes}
-            onChange={(e) => setKeyNotes(e.target.value)}
-            placeholder="Describe the student's situation, goals, approach, and anything the counselor team needs to know (~300 words)…"
-            rows={7}
-            className="field"
-            style={{ width: "100%", resize: "vertical", fontSize: 13, lineHeight: 1.6 }}
-          />
-          <div style={{ fontSize: 11, color: wordCount > 300 ? "var(--danger)" : "var(--ink-3)", marginTop: 4, textAlign: "right" }}>
-            {wordCount} / 300 words
-          </div>
+          {editingKeyNotes ? (
+            <>
+              <textarea
+                value={keyNotes}
+                onChange={(e) => setKeyNotes(e.target.value)}
+                placeholder="Describe the student's situation, goals, approach, and anything the counselor team needs to know (~300 words)…"
+                rows={7}
+                className="field"
+                autoFocus
+                onBlur={() => setEditingKeyNotes(false)}
+                style={{ width: "100%", resize: "vertical", fontSize: 13, lineHeight: 1.6 }}
+              />
+              <div style={{ fontSize: 11, color: wordCount > 300 ? "var(--danger)" : "var(--ink-3)", marginTop: 4, textAlign: "right" }}>
+                {wordCount} / 300 words
+              </div>
+            </>
+          ) : (
+            <div
+              onClick={() => setEditingKeyNotes(true)}
+              style={{
+                fontSize: 13, lineHeight: 1.6, color: keyNotes ? "var(--ink)" : "var(--ink-3)",
+                fontStyle: keyNotes ? "normal" : "italic",
+                padding: "8px 10px", borderRadius: "var(--r-sm)", cursor: "text",
+                border: "1px solid var(--line)", background: "var(--bg)",
+                whiteSpace: "pre-wrap", minHeight: 80,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-2)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg)")}
+            >
+              {keyNotes || "Click to add key notes…"}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: 24 }}>
