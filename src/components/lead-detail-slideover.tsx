@@ -6,7 +6,8 @@ import { type FullLead, type LeadOverrides, type ContactLogEntry, STATUS_OPTIONS
 import { STUDENT_ROSTER, MOCK_STAFF } from "@/lib/mock-data";
 import { useRole } from "@/components/dashboard-shell";
 import {
-  loadRules, appendLog, resolveTemplate, resolveRecipients, counselorEmailFromName,
+  loadRules, loadActionRules, appendLog, resolveTemplate, resolveRecipients, counselorEmailFromName,
+  computeActionDeadline,
   type AutomationRule,
 } from "@/lib/automations";
 
@@ -219,8 +220,31 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
   const [automationModal, setAutomationModal] = useState<AutomationModal | null>(null);
 
   const fireAutomations = (newStatus: string) => {
-    const rules = loadRules().filter((r) => r.isActive && r.triggerStatus === newStatus);
-    if (rules.length === 0) return;
+    const allEmailRules = loadRules();
+    const emailRules    = allEmailRules.filter((r) => r.isActive && r.triggerStatus === newStatus);
+
+    // Fire action rules silently — apply steps immediately
+    const actionRules = loadActionRules().filter((r) => r.isActive && r.triggerStatus === newStatus);
+    const actionUpdates: Partial<LeadOverrides> = {};
+    const extraEmailRuleIds: string[] = [];
+
+    for (const ar of actionRules) {
+      for (const step of ar.steps) {
+        if (step.type === "setDeadline") {
+          actionUpdates.deadline = computeActionDeadline(step);
+        }
+      }
+      if (ar.emailRuleId) extraEmailRuleIds.push(ar.emailRuleId);
+    }
+    if (Object.keys(actionUpdates).length > 0) onUpdate(lead.id, actionUpdates);
+
+    // Collect all email rules: direct matches + those linked from action rules
+    const extraEmailRules = extraEmailRuleIds
+      .map((id) => allEmailRules.find((r) => r.id === id))
+      .filter((r): r is typeof r & NonNullable<typeof r> => !!r);
+    const allMatchedEmail = [...emailRules, ...extraEmailRules];
+
+    if (allMatchedEmail.length === 0) return;
 
     const counselorEmail = lead.appointmentCounselor
       ? counselorEmailFromName(lead.appointmentCounselor)
@@ -237,14 +261,10 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
       appointmentTime: lead.appointmentTime ?? "",
     };
 
-    // Show modal for the first matching rule; remaining fire silently in log
-    rules.forEach((rule, i) => {
-      const emailCtx = {
-        parentEmail: lead.parentEmail,
-        studentEmail: lead.studentEmail,
-        counselorEmail,
-      };
-      const recipients = resolveRecipients(rule.recipients, emailCtx);
+    // Show modal for the first matching email rule; log the rest silently
+    allMatchedEmail.forEach((rule, i) => {
+      const emailCtx = { parentEmail: lead.parentEmail, studentEmail: lead.studentEmail, counselorEmail };
+      const recipients = resolveRecipients(rule.recipients, emailCtx, rule.otherEmails);
       const subject    = resolveTemplate(rule.subject, vars);
       const body       = resolveTemplate(rule.body, vars);
 

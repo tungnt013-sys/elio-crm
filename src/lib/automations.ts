@@ -7,6 +7,7 @@ export type AutomationRule = {
   name: string;
   triggerStatus: string;           // full status string, e.g. "S5 - Appointment Scheduled"
   recipients: AutomationRecipient[];
+  otherEmails?: string[];          // arbitrary email addresses
   subject: string;                 // supports {{studentName}}, {{parentName}}, etc.
   body: string;
   isActive: boolean;
@@ -24,8 +25,27 @@ export type AutomationLogEntry = {
   sentAt: string;
 };
 
-const LS_RULES = "elio:automationRules";
-const LS_LOG   = "elio:automationLog";
+// ── Action Automation types ───────────────────────────────────────────────────
+
+export type ActionStep = {
+  type: "setDeadline";
+  days: number;
+  basis: "business" | "calendar";
+};
+
+export type ActionRule = {
+  id: string;
+  name: string;
+  triggerStatus: string;
+  steps: ActionStep[];
+  emailRuleId?: string;            // optional: also fire this email rule
+  isActive: boolean;
+  createdAt: string;
+};
+
+const LS_RULES        = "elio:automationRules";
+const LS_LOG          = "elio:automationLog";
+const LS_ACTION_RULES = "elio:actionRules";
 
 export function loadRules(): AutomationRule[] {
   if (typeof window === "undefined") return [];
@@ -42,6 +62,14 @@ export function loadLog(): AutomationLogEntry[] {
 export function appendLog(entry: AutomationLogEntry) {
   const log = loadLog();
   localStorage.setItem(LS_LOG, JSON.stringify([entry, ...log].slice(0, 200)));
+}
+
+export function loadActionRules(): ActionRule[] {
+  if (typeof window === "undefined") return [];
+  try { return JSON.parse(localStorage.getItem(LS_ACTION_RULES) ?? "[]"); } catch { return []; }
+}
+export function saveActionRules(rules: ActionRule[]) {
+  localStorage.setItem(LS_ACTION_RULES, JSON.stringify(rules));
 }
 
 // ── Template variable resolution ─────────────────────────────────────────────
@@ -77,13 +105,20 @@ const COUNSELOR_EMAILS: Record<string, string> = {
 
 export function resolveRecipients(
   recipients: AutomationRecipient[],
-  ctx: LeadEmailContext
+  ctx: LeadEmailContext,
+  otherEmails?: string[]
 ): string[] {
   const emails: string[] = [];
   for (const r of recipients) {
     if (r === "parent"    && ctx.parentEmail)    emails.push(ctx.parentEmail);
     if (r === "student"   && ctx.studentEmail)   emails.push(ctx.studentEmail);
     if (r === "counselor" && ctx.counselorEmail) emails.push(ctx.counselorEmail);
+  }
+  if (otherEmails) {
+    for (const e of otherEmails) {
+      const trimmed = e.trim();
+      if (trimmed) emails.push(trimmed);
+    }
   }
   return emails;
 }
@@ -93,6 +128,26 @@ export function counselorEmailFromName(name: string): string | undefined {
     if (name.includes(k)) return v;
   }
   return undefined;
+}
+
+// ── Action step deadline computation ─────────────────────────────────────────
+function addDays(date: Date, days: number, business: boolean): Date {
+  const result = new Date(date);
+  if (!business) {
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const dow = result.getDay();
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  return result;
+}
+
+export function computeActionDeadline(step: ActionStep & { type: "setDeadline" }): string {
+  return addDays(new Date(), step.days, step.basis === "business").toISOString().slice(0, 10);
 }
 
 // ── Starter templates ─────────────────────────────────────────────────────────
@@ -140,6 +195,27 @@ Nếu gia đình có bất kỳ câu hỏi nào, vui lòng liên hệ chúng tô
 
 Trân trọng,
 Đội ngũ Elio Education`,
+    isActive: true,
+  },
+];
+
+export const STARTER_ACTION_RULES: Omit<ActionRule, "id" | "createdAt">[] = [
+  {
+    name: "S1 → First Contact Deadline",
+    triggerStatus: "S1 - New Lead",
+    steps: [{ type: "setDeadline", days: 2, basis: "business" }],
+    isActive: true,
+  },
+  {
+    name: "S2 → Schedule Consultation Deadline",
+    triggerStatus: "S2 - Initial Contact",
+    steps: [{ type: "setDeadline", days: 5, basis: "business" }],
+    isActive: true,
+  },
+  {
+    name: "S7 → Send Final Quote Deadline",
+    triggerStatus: "S7 - Follow Up Quote",
+    steps: [{ type: "setDeadline", days: 5, basis: "business" }],
     isActive: true,
   },
 ];
