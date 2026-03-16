@@ -122,17 +122,31 @@ const urgencyDot: Record<string, string> = {
   none: "var(--success)",
 };
 
+const LS_OVERRIDES = "elio:leadOverrides";
+function loadOverrides(): Record<string, Partial<LeadOverrides>> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(LS_OVERRIDES) ?? "{}"); } catch { return {}; }
+}
+function saveOverrides(data: Record<string, Partial<LeadOverrides>>) {
+  localStorage.setItem(LS_OVERRIDES, JSON.stringify(data));
+}
+
 export default function SalesPage() {
   const [filter, setFilter] = useState<FilterKey>("current");
   const [search, setSearch] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [leadOverrides, setLeadOverrides] = useState<Record<string, Partial<LeadOverrides>>>({});
 
+  useEffect(() => {
+    setLeadOverrides(loadOverrides());
+  }, []);
+
   const handleLeadUpdate = (id: string, updates: Partial<LeadOverrides>) => {
-    setLeadOverrides((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], ...updates },
-    }));
+    setLeadOverrides((prev) => {
+      const next = { ...prev, [id]: { ...prev[id], ...updates } };
+      saveOverrides(next);
+      return next;
+    });
   };
 
   const mergedLeads: MergedLead[] = ALL_LEADS.map((lead) => {
