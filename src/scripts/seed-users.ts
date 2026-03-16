@@ -1,10 +1,18 @@
 /**
  * Run once to seed initial allowed users in MongoDB.
- * Usage: npx tsx src/scripts/seed-users.ts
+ * Usage: MONGODB_URI="mongodb+srv://..." npx tsx src/scripts/seed-users.ts
  */
 import { MongoClient } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI;
+<<<<<<< Updated upstream
+=======
+if (!MONGODB_URI) {
+  console.error("Error: MONGODB_URI environment variable is required.");
+  console.error("Usage: MONGODB_URI=\"mongodb+srv://...\" npx tsx src/scripts/seed-users.ts");
+  process.exit(1);
+}
+>>>>>>> Stashed changes
 
 const INITIAL_USERS = [
   { email: "duc@elio.education",      name: "Đức",    role: "ADMIN" },
@@ -15,7 +23,7 @@ const INITIAL_USERS = [
 ];
 
 async function main() {
-  const client = new MongoClient(MONGODB_URI);
+  const client = new MongoClient(MONGODB_URI!);
   await client.connect();
   const db = client.db();
   const col = db.collection("allowed_users");
