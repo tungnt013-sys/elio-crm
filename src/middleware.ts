@@ -44,7 +44,8 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
-  const role = req.auth?.user?.role as string | undefined;
+  // role lives on session.user (via session callback) or directly on the JWT token
+  const role = (req.auth?.user?.role ?? (req.auth as { token?: { role?: string } } | null)?.token?.role) as string | undefined;
 
   // Redirect "/" to the role's default page
   if (pathname === "/") {
