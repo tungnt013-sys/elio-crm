@@ -36,6 +36,7 @@ export type LeadOverrides = {
   extracurriculars?: string;
   services?: string;
   specialRequests?: string;
+  consultantNotes?: string;
 };
 
 export const STATUS_OPTIONS = [

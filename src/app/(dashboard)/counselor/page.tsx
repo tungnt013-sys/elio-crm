@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, Fragment } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { STUDENT_ROSTER, type StudentDetail } from "@/lib/mock-data";
+import { ALL_LEADS, type LeadOverrides } from "@/lib/all-leads";
+import { LeadDetailSlideover } from "@/components/lead-detail-slideover";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -81,6 +84,26 @@ function GamePlanModal({
         width: "min(700px, 95vw)", maxHeight: "90vh", overflowY: "auto",
         boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
       }}>
+        {/* See full profile link */}
+        <div style={{ marginBottom: 14 }}>
+          <Link
+            href={`/students/${student.id}`}
+            onClick={onClose}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
+              <path d="M4.5 6h3M6 4.5l1.5 1.5L6 7.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            See full profile
+          </Link>
+        </div>
+
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
             <div style={{ fontWeight: 600, fontSize: 16 }}>{student.fullName}</div>
@@ -226,9 +249,177 @@ function GamePlanModal({
   );
 }
 
+// ── Proposal types ───────────────────────────────────────────────────────────
+
+export type ProposalEntry = {
+  url: string;
+  submittedBy: string;
+  submittedAt: string; // ISO string
+  seen: boolean;       // has sales opened/acknowledged it
+};
+
+const LS_PROPOSALS = "elio:proposals";
+
+function loadProposals(): Record<string, ProposalEntry> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(LS_PROPOSALS) ?? "{}"); } catch { return {}; }
+}
+function saveProposals(p: Record<string, ProposalEntry>) {
+  if (typeof window !== "undefined") localStorage.setItem(LS_PROPOSALS, JSON.stringify(p));
+}
+
+// ── Prospecting Tab ───────────────────────────────────────────────────────────
+
+function ProspectingTab({ submitterName }: { submitterName: string }) {
+  const s6Leads = ALL_LEADS.filter((l) => l.status.startsWith("S6"));
+  const [proposals, setProposals] = useState<Record<string, ProposalEntry>>(loadProposals);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+
+  const setDraft = (id: string, val: string) =>
+    setDrafts((prev) => ({ ...prev, [id]: val }));
+
+  const submit = (leadId: string) => {
+    const url = (drafts[leadId] ?? "").trim();
+    if (!url) return;
+    const entry: ProposalEntry = {
+      url,
+      submittedBy: submitterName,
+      submittedAt: new Date().toISOString(),
+      seen: false,
+    };
+    const next = { ...proposals, [leadId]: entry };
+    setProposals(next);
+    saveProposals(next);
+    setDrafts((prev) => { const n = { ...prev }; delete n[leadId]; return n; });
+  };
+
+  const edit = (leadId: string) => {
+    setDrafts((prev) => ({ ...prev, [leadId]: proposals[leadId]?.url ?? "" }));
+    const next = { ...proposals };
+    delete next[leadId];
+    setProposals(next);
+    saveProposals(next);
+  };
+
+  if (s6Leads.length === 0) {
+    return (
+      <div className="empty-state" style={{ padding: 40, fontSize: 13, color: "var(--ink-3)" }}>
+        No students are at Proposal Pending (S6) right now.
+      </div>
+    );
+  }
+
+  const submitted = s6Leads.filter((l) => proposals[l.id]);
+  const pending   = s6Leads.filter((l) => !proposals[l.id]);
+
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      {/* Pending proposals */}
+      {pending.length > 0 && (
+        <div className="panel-flush">
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="section-title">Awaiting Proposal</span>
+            <span style={{ fontSize: 11, color: "var(--warning)" }}>{pending.length} student{pending.length !== 1 ? "s" : ""}</span>
+          </div>
+          {pending.map((lead) => (
+            <div key={lead.id} style={{
+              padding: "14px 16px", borderBottom: "1px solid var(--line)",
+              display: "grid", gap: 10,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>{lead.studentName}</span>
+                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Grade {lead.grade}</span>
+                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>·</span>
+                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{lead.school}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 99,
+                  background: "var(--accent-soft)", color: "var(--accent)",
+                }}>Proposal Pending</span>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  className="field"
+                  type="url"
+                  placeholder="Paste Google Doc link…"
+                  value={drafts[lead.id] ?? ""}
+                  onChange={(e) => setDraft(lead.id, e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") submit(lead.id); }}
+                  style={{ flex: 1, fontSize: 13 }}
+                />
+                <button
+                  className="btn btn-sm"
+                  onClick={() => submit(lead.id)}
+                  disabled={!(drafts[lead.id] ?? "").trim()}
+                  style={{ flexShrink: 0, fontWeight: 600, opacity: (drafts[lead.id] ?? "").trim() ? 1 : 0.4 }}
+                >
+                  Submit →
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Submitted proposals */}
+      {submitted.length > 0 && (
+        <div className="panel-flush">
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="section-title">Submitted</span>
+            <span style={{ fontSize: 11, color: "var(--success)" }}>{submitted.length} proposal{submitted.length !== 1 ? "s" : ""}</span>
+          </div>
+          {submitted.map((lead) => {
+            const p = proposals[lead.id];
+            const dt = new Date(p.submittedAt);
+            const dtStr = `${dt.toLocaleDateString("vi-VN")} ${dt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+            return (
+              <div key={lead.id} style={{
+                padding: "12px 16px", borderBottom: "1px solid var(--line)",
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13 }}>{lead.studentName}</span>
+                  <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Grade {lead.grade} · {lead.school}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, flexWrap: "wrap" }}>
+                  <span style={{
+                    fontSize: 11, padding: "2px 8px", borderRadius: 99,
+                    background: "var(--success-bg)", color: "var(--success)", fontWeight: 600,
+                  }}>✓ Submitted</span>
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                    onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                  >
+                    {p.url}
+                  </a>
+                  <span style={{ fontSize: 11, color: "var(--ink-3)" }}>{dtStr} · {p.submittedBy}</span>
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={() => edit(lead.id)}
+                    style={{ fontSize: 11 }}
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CounselorPage() {
+  const { data: session } = useSession();
+  const userName = session?.user?.name ?? "Counselor";
+  const [activeTab, setActiveTab] = useState<"students" | "prospecting">("students");
+
   const [gamePlans, setGamePlansState] = useState<Record<string, GamePlan>>(() => {
     if (typeof window === "undefined") return {};
     try { return JSON.parse(localStorage.getItem("elio:gamePlans") ?? "{}"); } catch { return {}; }
@@ -257,8 +448,14 @@ export default function CounselorPage() {
   };
 
   const [modalStudentId, setModalStudentId] = useState<string | null>(null);
+  const [slideoverStudentId, setSlideoverStudentId] = useState<string | null>(null);
+  const [leadOverrides, setLeadOverrides] = useState<Record<string, Partial<LeadOverrides>>>({});
   const [showDone, setShowDone] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const handleLeadUpdate = (id: string, updates: Partial<LeadOverrides>) => {
+    setLeadOverrides((prev) => ({ ...prev, [id]: { ...prev[id], ...updates } }));
+  };
 
   const toggleGroup = (id: string) =>
     setCollapsedGroups((prev) => {
@@ -330,9 +527,70 @@ export default function CounselorPage() {
     ? STUDENT_ROSTER.find((s) => s.id === modalStudentId) ?? null
     : null;
 
+  const slideoverStudent = slideoverStudentId
+    ? STUDENT_ROSTER.find((s) => s.id === slideoverStudentId) ?? null
+    : null;
+  const slideoverLead = slideoverStudent
+    ? (() => {
+        const base = ALL_LEADS.find(
+          (l) => l.studentName === slideoverStudent.fullName ||
+                 slideoverStudent.fullName.includes(l.studentName.split(" ").pop() || "___")
+        );
+        if (!base) return null;
+        const ov = leadOverrides[base.id];
+        return ov ? { ...base, ...ov } : base;
+      })()
+    : null;
+
+  const s6Count = ALL_LEADS.filter((l) => l.status.startsWith("S6")).length;
+
   return (
     <section style={{ display: "grid", gap: 20 }}>
-      <h1 className="page-title">Counselor Dashboard</h1>
+      {/* ── Header + Tabs ─────────────────────────────────────────────── */}
+      {/* Tab bar hidden when only My Students exists (no S6 leads) */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <h1 className="page-title" style={{ margin: 0 }}>Counselor Dashboard</h1>
+        {s6Count > 0 && (
+          <div style={{ display: "flex", gap: 4, background: "var(--bg-2)", padding: 3, borderRadius: "var(--r-md)" }}>
+            {([
+              { key: "students",    label: "My Students" },
+              { key: "prospecting", label: "Prospecting Students", badge: s6Count },
+            ] as const).map(({ key, label, badge }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                style={{
+                  padding: "5px 14px", borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
+                  fontSize: 13, fontWeight: activeTab === key ? 600 : 400,
+                  background: activeTab === key ? "var(--surface)" : "transparent",
+                  color: activeTab === key ? "var(--ink)" : "var(--ink-3)",
+                  boxShadow: activeTab === key ? "0 1px 3px rgba(0,0,0,.08)" : "none",
+                  transition: "all 150ms",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}
+              >
+                {label}
+                {badge !== undefined && badge > 0 && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 99,
+                    background: activeTab === key ? "var(--accent)" : "var(--ink-3)",
+                    color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    padding: "0 4px",
+                  }}>
+                    {badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {activeTab === "prospecting" && (
+        <ProspectingTab submitterName={userName} />
+      )}
+
+      {activeTab === "students" && (<>
 
       {/* ── Section 1: Next Items ─────────────────────────────────────── */}
       <div className="panel-flush">
@@ -448,7 +706,7 @@ export default function CounselorPage() {
                   padding: "12px 16px", borderBottom: "1px solid var(--line)",
                   cursor: "pointer", transition: "background 120ms",
                 }}
-                onClick={() => setModalStudentId(student.id)}
+                onClick={() => setSlideoverStudentId(student.id)}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-2)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "")}
               >
@@ -497,7 +755,7 @@ export default function CounselorPage() {
                     padding: "10px 16px", borderBottom: "1px solid var(--line)",
                     cursor: "pointer", transition: "background 120ms",
                   }}
-                  onClick={() => setModalStudentId(student.id)}
+                  onClick={() => setSlideoverStudentId(student.id)}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-2)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                 >
@@ -589,6 +847,19 @@ export default function CounselorPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* ── end students tab ─────────────────────────────────────────── */}
+      </>)}
+
+      {/* ── Student Slideover (sales-style) ──────────────────────────── */}
+      {slideoverLead && (
+        <LeadDetailSlideover
+          lead={slideoverLead}
+          overrides={leadOverrides[slideoverLead.id]}
+          onUpdate={handleLeadUpdate}
+          onClose={() => setSlideoverStudentId(null)}
+        />
       )}
 
       {/* ── Game Plan Modal ───────────────────────────────────────────── */}

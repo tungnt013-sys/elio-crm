@@ -1,9 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ALL_LEADS, type FullLead, type LeadOverrides, computeDeadline } from "@/lib/all-leads";
-import { LEAD_STATS } from "@/lib/mock-data";
 import { LeadDetailSlideover } from "@/components/lead-detail-slideover";
+import type { ProposalEntry } from "@/app/(dashboard)/counselor/page";
+
+// ── KPI helpers ───────────────────────────────────────────────────────────────
+// Business window: Mon–Fri, 08:00–18:00 (600 min/day).
+// Date-only strings (no "T") are treated as T10:00:00 (legacy records).
+// Full ISO timestamps (e.g. "2025-08-11T14:23:00") use the actual time.
+function bizMinutesBetween(a: string, b: string): number | null {
+  if (!a || !b) return null;
+  const norm = (s: string) => (s.includes("T") ? s : s + "T10:00:00");
+  const from = new Date(norm(a));
+  const to   = new Date(norm(b));
+  if (isNaN(from.getTime()) || isNaN(to.getTime())) return null;
+  if (to <= from) return 0;
+
+  const BIZ_S = 8  * 60;   // 480 min from midnight
+  const BIZ_E = 18 * 60;   // 1080 min from midnight
+  const PER_DAY = BIZ_E - BIZ_S; // 600
+
+  const isWeekday = (d: Date) => { const w = d.getDay(); return w >= 1 && w <= 5; };
+  const minOfDay  = (d: Date) => d.getHours() * 60 + d.getMinutes();
+  const bizMins   = (d: Date, s: number, e: number) =>
+    isWeekday(d) ? Math.max(0, Math.min(BIZ_E, e) - Math.max(BIZ_S, s)) : 0;
+
+  const fromDay = new Date(from); fromDay.setHours(0, 0, 0, 0);
+  const toDay   = new Date(to);   toDay.setHours(0, 0, 0, 0);
+
+  if (fromDay.getTime() === toDay.getTime()) {
+    return bizMins(from, minOfDay(from), minOfDay(to));
+  }
+
+  let total = bizMins(from, minOfDay(from), BIZ_E);
+
+  const cursor = new Date(fromDay);
+  cursor.setDate(cursor.getDate() + 1);
+  while (cursor.getTime() < toDay.getTime()) {
+    if (isWeekday(cursor)) total += PER_DAY;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  total += bizMins(to, BIZ_S, minOfDay(to));
+  return total;
+}
+function median(nums: number[]): number | null {
+  if (!nums.length) return null;
+  const s = [...nums].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function fmtBizMins(mins: number | null, n: number): string {
+  if (mins === null || n === 0) return "—";
+  if (mins === 0) return "< 1m";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+function fmtDays(d: number | null, n: number): string {
+  if (d === null || n === 0) return "—";
+  return `${d < 1 ? "< 1" : d.toFixed(1)}d`;
+}
 
 type MergedLead = FullLead & Partial<LeadOverrides>;
 
@@ -117,27 +177,175 @@ export default function SalesPage() {
 
   leads = [...leads].sort((a, b) => stageNum(a.status) - stageNum(b.status));
 
-  const stats = LEAD_STATS;
+  // ── KPI computations ────────────────────────────────────────────────────────
+  // 1. Time to First Response: submission → firstContact (business minutes)
+  const responseGaps = mergedLeads
+    .map(l => bizMinutesBetween(l.submissionTime, l.firstContact))
+    .filter((d): d is number => d !== null && d > 0);
+  const avgResponse = median(responseGaps);
+
+  // 2. Time to First Meeting: submission → appointmentDate (calendar days)
+  const meetingGaps = mergedLeads
+    .map(l => {
+      const a = l.submissionTime, b = l.appointmentDate || "";
+      if (!a || !b) return null;
+      const da = new Date(a), db = new Date(b);
+      if (isNaN(da.getTime()) || isNaN(db.getTime())) return null;
+      const d = (db.getTime() - da.getTime()) / 86_400_000;
+      return d > 0 ? d : null;
+    })
+    .filter((d): d is number => d !== null);
+  const avgMeeting = median(meetingGaps);
+
+  // 3. Meeting → Proposal Sent: appointmentDate → lastContact for leads at S6+
+  const proposalGaps = mergedLeads
+    .filter(l => stageNum(l.status) >= 6)
+    .map(l => {
+      const a = l.appointmentDate || "", b = l.lastContact;
+      if (!a || !b) return null;
+      const da = new Date(a), db = new Date(b);
+      if (isNaN(da.getTime()) || isNaN(db.getTime())) return null;
+      const d = (db.getTime() - da.getTime()) / 86_400_000;
+      return d > 0 ? d : null;
+    })
+    .filter((d): d is number => d !== null);
+  const avgProposal = median(proposalGaps);
+
+  // 4. Active Pipeline: S1–S9
+  const activePipeline = mergedLeads.filter(l => { const n = stageNum(l.status); return n >= 1 && n <= 9; }).length;
+
+  // ── Counselor proposals notification ────────────────────────────────────────
+  const [proposals, setProposals] = useState<Record<string, ProposalEntry>>({});
+  const [showProposals, setShowProposals] = useState(false);
+  useEffect(() => {
+    const load = () => {
+      try { setProposals(JSON.parse(localStorage.getItem("elio:proposals") ?? "{}")); } catch { /* ignore */ }
+    };
+    load();
+    window.addEventListener("storage", load);
+    return () => window.removeEventListener("storage", load);
+  }, []);
+
+  const unseenProposals = Object.entries(proposals).filter(([, p]) => !p.seen);
+
+  const markAllSeen = () => {
+    const next: Record<string, ProposalEntry> = {};
+    for (const [id, p] of Object.entries(proposals)) next[id] = { ...p, seen: true };
+    setProposals(next);
+    localStorage.setItem("elio:proposals", JSON.stringify(next));
+  };
+
+  const proposalLeadMap = Object.fromEntries(
+    ALL_LEADS.map((l) => [l.id, l])
+  );
 
   return (
     <section style={{ display: "grid", gap: 20 }}>
       <h1 className="page-title">Sales Pipeline</h1>
 
-      <div className="kpi-grid" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+      <div className="kpi-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         {[
-          { label: "Total Leads", value: stats.total, sub: "All time" },
-          { label: "Won", value: stats.won, sub: `${((stats.won / stats.total) * 100).toFixed(1)}% conversion`, color: "var(--success)" },
-          { label: "Active Pipeline", value: stats.proposalSent + stats.proposalPending + stats.appointmentScheduled, sub: "In progress" },
-          { label: "Warm Leads", value: stats.warmLead, sub: "Re-engage", color: "var(--warning)" },
-          { label: "Lost", value: stats.lostNotFit + stats.lostNoContact, sub: "Not fit + No contact", color: "var(--danger)" },
+          {
+            label: "Time to First Response",
+            value: fmtBizMins(avgResponse, responseGaps.length),
+            sub: responseGaps.length ? `Median · ${responseGaps.length} leads · biz hrs` : "No data yet",
+          },
+          {
+            label: "Time to First Meeting",
+            value: fmtDays(avgMeeting, meetingGaps.length),
+            sub: meetingGaps.length ? `Median across ${meetingGaps.length} leads` : "No data yet",
+          },
+          {
+            label: "Meeting → Proposal Sent",
+            value: fmtDays(avgProposal, proposalGaps.length),
+            sub: proposalGaps.length ? `Median across ${proposalGaps.length} leads` : "No data yet",
+          },
+          {
+            label: "Active Pipeline",
+            value: activePipeline,
+            sub: "Leads in S1–S9",
+          },
         ].map((k) => (
           <div key={k.label} className="kpi-card">
             <div className="kpi-label">{k.label}</div>
-            <div className="kpi-value" style={{ color: k.color }}>{k.value}</div>
+            <div className="kpi-value">{k.value}</div>
             <div className="kpi-sub">{k.sub}</div>
           </div>
         ))}
       </div>
+
+      {/* ── Counselor Proposals Banner ──────────────────────────────── */}
+      {Object.keys(proposals).length > 0 && (
+        <div className="panel-flush" style={{ overflow: "hidden" }}>
+          <div
+            style={{
+              padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+              gap: 12, cursor: "pointer",
+              background: unseenProposals.length > 0 ? "var(--accent-soft)" : "var(--bg-2)",
+              borderBottom: showProposals ? "1px solid var(--line)" : "none",
+            }}
+            onClick={() => { setShowProposals((v) => !v); if (!showProposals) markAllSeen(); }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 15 }}>📄</span>
+              <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>
+                Counselor Proposals
+              </span>
+              {unseenProposals.length > 0 && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 99,
+                  background: "var(--accent)", color: "#fff",
+                }}>
+                  {unseenProposals.length} new
+                </span>
+              )}
+              <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                {Object.keys(proposals).length} proposal{Object.keys(proposals).length !== 1 ? "s" : ""} submitted
+              </span>
+            </div>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+              style={{ transform: showProposals ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 150ms", color: "var(--ink-3)" }}>
+              <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          {showProposals && (
+            <div>
+              {Object.entries(proposals).map(([leadId, p]) => {
+                const lead = proposalLeadMap[leadId];
+                const dt = new Date(p.submittedAt);
+                const dtStr = `${dt.toLocaleDateString("vi-VN")} ${dt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+                return (
+                  <div key={leadId} style={{
+                    padding: "12px 16px", borderBottom: "1px solid var(--line)",
+                    display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
+                  }}>
+                    <div style={{ flex: 1, minWidth: 180 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>{lead?.studentName ?? leadId}</span>
+                      {lead && <span style={{ fontSize: 12, color: "var(--ink-3)", marginLeft: 8 }}>Grade {lead.grade} · {lead.school}</span>}
+                    </div>
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: 12, color: "var(--accent)", textDecoration: "none",
+                        maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                    >
+                      {p.url}
+                    </a>
+                    <span style={{ fontSize: 11, color: "var(--ink-3)", flexShrink: 0 }}>
+                      {p.submittedBy} · {dtStr}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Next Items */}
       {nextItems.length > 0 && (

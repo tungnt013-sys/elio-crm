@@ -1,9 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { type FullLead, type LeadOverrides, type ContactLogEntry, STATUS_OPTIONS, computeDeadline } from "@/lib/all-leads";
 import { STUDENT_ROSTER, MOCK_STAFF } from "@/lib/mock-data";
 import { useRole } from "@/components/dashboard-shell";
+import {
+  loadRules, appendLog, resolveTemplate, resolveRecipients, counselorEmailFromName,
+  type AutomationRule,
+} from "@/lib/automations";
+
+// ── Shared note localStorage (same store as student profile page) ─────────────
+type NoteEntry = { content: string; editedBy: string; editedAt: string };
+function readSharedNote(lsKey: string, studentId: string): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const store: Record<string, NoteEntry> = JSON.parse(localStorage.getItem(lsKey) ?? "{}");
+    return store[studentId]?.content ?? "";
+  } catch { return ""; }
+}
+function writeSharedNote(lsKey: string, studentId: string, content: string, editedBy: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const store: Record<string, NoteEntry> = JSON.parse(localStorage.getItem(lsKey) ?? "{}");
+    store[studentId] = { content, editedBy, editedAt: new Date().toISOString() };
+    localStorage.setItem(lsKey, JSON.stringify(store));
+  } catch { /* ignore */ }
+}
 
 type MergedLead = FullLead & Partial<LeadOverrides>;
 
@@ -76,8 +99,8 @@ function autoNextAction(status: string): { action: string; urgency: "high" | "me
   if (status.startsWith("S1 ")) return { action: "Make first contact within 2 business days", urgency: "high" };
   if (status.startsWith("S2 ")) return { action: "Call parent, collect intake form info", urgency: "high" };
   if (status.startsWith("S3 ")) return { action: "Qualify lead — confirm need, budget, timeline", urgency: "medium" };
-  if (status.startsWith("S4 ")) return { action: "Schedule consultation appointment", urgency: "medium" };
-  if (status.startsWith("S5 ")) return { action: "Conduct consultation meeting", urgency: "medium" };
+  if (status.startsWith("S4 ")) return { action: "Book appointment date, time & counselor — then move to S5", urgency: "medium" };
+  if (status.startsWith("S5 ")) return { action: "Conduct scheduled consultation meeting", urgency: "medium" };
   if (status.startsWith("S6 ")) return { action: "Prepare and send proposal & quote", urgency: "medium" };
   if (status.startsWith("S7 ")) return { action: "Follow up on quote — negotiate if needed", urgency: "medium" };
   if (status.startsWith("S8 ")) return { action: "Send final quote — push for contract sign", urgency: "medium" };
@@ -141,6 +164,7 @@ const MEDIUM_COLORS: Record<string, string> = {
 
 export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Props) {
   const { role } = useRole();
+  const { data: session } = useSession();
   const isAdmin = role === "admin";
   const isReadOnly = role === "sales_view";
   const { action: autoAction, urgency } = autoNextAction(lead.status);
@@ -159,11 +183,14 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
   const uc = urgencyColors[urgency];
 
   // local draft states
-  const [noteDraft, setNoteDraft] = useState("");
+  const [salesNotesDraft, setSalesNotesDraft] = useState(lead.salesNotes || "");
+  const [editingSalesNotes, setEditingSalesNotes] = useState(false);
   const [editingAction, setEditingAction] = useState(false);
   const [actionDraft, setActionDraft] = useState(lead.customNextAction || "");
   const [contactMedium, setContactMedium] = useState<ContactLogEntry["medium"]>("phone");
   const [contactNote, setContactNote] = useState("");
+  const [consultantDraft, setConsultantDraft] = useState(lead.consultantNotes || "");
+  const [editingConsultantNotes, setEditingConsultantNotes] = useState(false);
 
   // Appointment modal state
   const [showApptModal, setShowApptModal] = useState(false);
@@ -171,15 +198,66 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
   const [apptTime, setApptTime] = useState("");
   const [apptCounselor, setApptCounselor] = useState(APPOINTMENT_COUNSELORS[0]);
 
+  // Automation email modal state
+  type AutomationModal = {
+    rule: AutomationRule;
+    recipients: string[];   // resolved email addresses
+    subject: string;        // resolved subject
+    body: string;           // resolved body
+  };
+  const [automationModal, setAutomationModal] = useState<AutomationModal | null>(null);
+
+  const fireAutomations = (newStatus: string) => {
+    const rules = loadRules().filter((r) => r.isActive && r.triggerStatus === newStatus);
+    if (rules.length === 0) return;
+
+    const counselorEmail = lead.appointmentCounselor
+      ? counselorEmailFromName(lead.appointmentCounselor)
+      : undefined;
+
+    const vars = {
+      studentName: lead.studentName,
+      parentName: lead.parentName,
+      grade: String(lead.grade ?? ""),
+      school: lead.school ?? "",
+      status: newStatus.replace(/^S\d+ - /, ""),
+      counselorName: lead.appointmentCounselor ?? "",
+      appointmentDate: lead.appointmentDate ?? "",
+      appointmentTime: lead.appointmentTime ?? "",
+    };
+
+    // Show modal for the first matching rule; remaining fire silently in log
+    rules.forEach((rule, i) => {
+      const emailCtx = {
+        parentEmail: lead.parentEmail,
+        studentEmail: lead.studentEmail,
+        counselorEmail,
+      };
+      const recipients = resolveRecipients(rule.recipients, emailCtx);
+      const subject    = resolveTemplate(rule.subject, vars);
+      const body       = resolveTemplate(rule.body, vars);
+
+      if (i === 0) {
+        setAutomationModal({ rule, recipients, subject, body });
+      } else {
+        appendLog({ id: `${Date.now()}-${i}`, ruleId: rule.id, ruleName: rule.name, leadId: lead.id, studentName: lead.studentName, sentTo: recipients, subject, sentAt: new Date().toISOString() });
+      }
+    });
+  };
+
   // Reschedule inline state
   const [showReschedule, setShowReschedule] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [rescheduleReason, setRescheduleReason] = useState("");
 
-  // reset on lead change
+  // reset on lead change — read notes from shared localStorage (same as student profile)
   useEffect(() => {
-    setNoteDraft("");
+    const rid = STUDENT_ROSTER.find(
+      (s) => s.fullName === lead.studentName || s.fullName.includes(lead.studentName.split(" ").pop() || "___")
+    )?.id;
+    setSalesNotesDraft(rid ? (readSharedNote("elio:note:sales", rid) || lead.salesNotes || "") : (lead.salesNotes || ""));
+    setEditingSalesNotes(false);
     setEditingAction(false);
     setActionDraft(lead.customNextAction || "");
     setContactNote("");
@@ -187,6 +265,8 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
     setShowApptModal(false);
     setShowReschedule(false);
     setRescheduleReason("");
+    setConsultantDraft(rid ? (readSharedNote("elio:note:counselor", rid) || lead.consultantNotes || "") : (lead.consultantNotes || ""));
+    setEditingConsultantNotes(false);
   }, [lead.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const today = new Date().toISOString().slice(0, 10);
@@ -260,11 +340,11 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
 
         <div className="slide-over-body">
 
-          {/* S5 Appointment Card */}
-          {lead.status.startsWith("S5 ") && (
+          {/* S4 Appointment Card */}
+          {lead.status.startsWith("S4 ") && (
             <div style={{ marginBottom: 16, padding: "12px 14px", background: "var(--accent-soft)", borderRadius: "var(--r-md)", border: "1px solid rgba(0,112,243,0.2)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>Appointment Scheduled</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>Book Consultation</div>
                 <div style={{ display: "flex", gap: 6 }}>
                   {lead.appointmentDate && (
                     <button
@@ -361,16 +441,58 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
                 onClick={() => {
                   const now = new Date();
                   const ts = `[${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 5)}]`;
-                  const note = `${ts} Appointment completed (${lead.appointmentDate}${lead.appointmentTime ? ` ${lead.appointmentTime}` : ""}, counselor: ${lead.appointmentCounselor || "—"}) — moving to Proposal Pending`;
+                  const note = `${ts} Appointment booked (${lead.appointmentDate}${lead.appointmentTime ? ` ${lead.appointmentTime}` : ""}, counselor: ${lead.appointmentCounselor || "—"}) — moving to Appointment Scheduled`;
                   const existing = lead.salesNotes || "";
                   onUpdate(lead.id, {
-                    status: "S6 - Proposal Pending",
+                    status: "S5 - Appointment Scheduled",
                     salesNotes: existing ? `${note}\n${existing}` : note,
                   });
+                  setSalesNotesDraft((existing ? `${note}\n${existing}` : note));
                 }}
                 style={{ width: "100%" }}
               >
-                ✓ Appointment Done — Move to S6 Proposal Pending
+                ✓ Appointment Booked — Move to S5 Appointment Scheduled
+              </button>
+            </div>
+          )}
+
+          {/* S5 Meeting Done Card */}
+          {lead.status.startsWith("S5 ") && (
+            <div style={{ marginBottom: 16, padding: "12px 14px", background: "var(--success-bg)", borderRadius: "var(--r-md)", border: "1px solid rgba(0,160,80,0.2)" }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--success)", marginBottom: 8 }}>Appointment Scheduled</div>
+              {lead.appointmentDate ? (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+                  <div>
+                    <div className="detail-label">Date</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{lead.appointmentDate}</div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Time</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{lead.appointmentTime || "—"}</div>
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <div className="detail-label">Counselor</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{lead.appointmentCounselor || "—"}</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 10 }}>No appointment details recorded.</div>
+              )}
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => {
+                  const now = new Date();
+                  const ts = `[${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 5)}]`;
+                  const note = `${ts} Consultation meeting done — moving to Proposal Pending`;
+                  const existing = lead.salesNotes || "";
+                  const updated = existing ? `${note}\n${existing}` : note;
+                  onUpdate(lead.id, { status: "S6 - Proposal Pending", salesNotes: updated });
+                  setSalesNotesDraft(updated);
+                  fireAutomations("S6 - Proposal Pending");
+                }}
+                style={{ width: "100%" }}
+              >
+                ✓ Meeting Done — Move to S6 Proposal Pending
               </button>
             </div>
           )}
@@ -387,12 +509,13 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
                   const newStatus = e.target.value;
                   const deadline = computeDeadline(newStatus, new Date());
                   onUpdate(lead.id, { status: newStatus, ...(deadline ? { deadline } : {}) });
-                  if (newStatus.startsWith("S5 ")) {
+                  if (newStatus.startsWith("S4 ")) {
                     setApptDate("");
                     setApptTime("");
                     setApptCounselor(APPOINTMENT_COUNSELORS[0]);
                     setShowApptModal(true);
                   }
+                  fireAutomations(newStatus);
                 }}
                 style={{ fontSize: 13, fontWeight: 500, width: "100%" }}
               >
@@ -543,50 +666,96 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
             )}
           </div>
 
-          {/* Sales Notes (editable) */}
+          {/* Sales Notes */}
           <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: 12, marginBottom: 12 }}>
-            <div className="section-title" style={{ marginBottom: 8 }}>Sales Notes</div>
-            <div style={{ display: "grid", gap: 8 }}>
-              <textarea
-                className="field"
-                value={noteDraft}
-                onChange={(e) => setNoteDraft(e.target.value)}
-                placeholder="Add a note..."
-                rows={2}
-                style={{ fontSize: 12, resize: "vertical" }}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 26 }}>
+              <div className="section-title">Sales Notes</div>
+              {/* Save button reserves space always to prevent layout shift */}
               <button
                 className="btn btn-sm btn-primary"
-                disabled={!noteDraft.trim()}
-                onClick={() => {
-                  const now = new Date();
-                  const ts = `[${now.toISOString().slice(0, 10)} ${now.toTimeString().slice(0, 5)}]`;
-                  const newEntry = `${ts} ${noteDraft.trim()}`;
-                  const existing = lead.salesNotes || "";
-                  onUpdate(lead.id, { salesNotes: existing ? `${newEntry}\n${existing}` : newEntry });
-                  setNoteDraft("");
-                }}
-                style={{ justifySelf: "start" }}
+                onClick={() => { onUpdate(lead.id, { salesNotes: salesNotesDraft }); if (rosterMatch) writeSharedNote("elio:note:sales", rosterMatch.id, salesNotesDraft, session?.user?.name ?? ""); setEditingSalesNotes(false); }}
+                style={{ fontSize: 12, fontWeight: 700, padding: "2px 10px", height: "auto", visibility: salesNotesDraft !== (lead.salesNotes || "") ? "visible" : "hidden" }}
               >
-                Add Note
+                Save
               </button>
-              {lead.salesNotes && (
-                <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.6, whiteSpace: "pre-wrap", background: "var(--bg)", padding: "10px 12px", borderRadius: "var(--r-md)", border: "1px solid var(--line)", maxHeight: 220, overflowY: "auto" }}>
-                  {lead.salesNotes}
-                </div>
+              {!editingSalesNotes && (
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setEditingSalesNotes(true)}
+                  style={{ fontSize: 11, marginLeft: "auto" }}
+                >
+                  {salesNotesDraft ? "Edit" : "+ Add"}
+                </button>
               )}
             </div>
+            {editingSalesNotes ? (
+              <textarea
+                autoFocus
+                className="field"
+                value={salesNotesDraft}
+                onChange={(e) => setSalesNotesDraft(e.target.value)}
+                rows={Math.max(4, (salesNotesDraft || "").split("\n").length + 1)}
+                style={{ fontSize: 12, resize: "vertical", width: "100%", lineHeight: 1.6, fontFamily: "inherit" }}
+                onBlur={() => { if (salesNotesDraft === (lead.salesNotes || "")) setEditingSalesNotes(false); }}
+              />
+            ) : salesNotesDraft ? (
+              <div
+                onClick={() => setEditingSalesNotes(true)}
+                style={{ fontSize: 12, lineHeight: 1.7, color: "var(--ink-2)", whiteSpace: "pre-wrap", cursor: "text", padding: "6px 8px", borderRadius: "var(--r-sm)", border: "1px solid transparent" }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--line)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "transparent")}
+              >
+                {salesNotesDraft}
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, color: "var(--ink-3)", fontStyle: "italic" }}>No sales notes yet.</div>
+            )}
           </div>
 
-          {/* Consultant Notes (read-only) */}
-          {lead.consultantNotes && (
-            <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: 12, marginBottom: 12 }}>
-              <div className="section-title" style={{ marginBottom: 8 }}>Consultant Notes</div>
-              <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.6, whiteSpace: "pre-wrap", background: "var(--bg)", padding: "10px 12px", borderRadius: "var(--r-md)", border: "1px solid var(--line)" }}>
-                {lead.consultantNotes}
-              </div>
+          {/* Consultant Notes */}
+          <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: 12, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, minHeight: 26 }}>
+              <div className="section-title">Consultant Notes</div>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => { onUpdate(lead.id, { consultantNotes: consultantDraft }); if (rosterMatch) writeSharedNote("elio:note:counselor", rosterMatch.id, consultantDraft, session?.user?.name ?? ""); setEditingConsultantNotes(false); }}
+                style={{ fontSize: 12, fontWeight: 700, padding: "2px 10px", height: "auto", visibility: consultantDraft !== (lead.consultantNotes || "") ? "visible" : "hidden" }}
+              >
+                Save
+              </button>
+              {!editingConsultantNotes && (
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setEditingConsultantNotes(true)}
+                  style={{ fontSize: 11, marginLeft: "auto" }}
+                >
+                  {consultantDraft ? "Edit" : "+ Add"}
+                </button>
+              )}
             </div>
-          )}
+            {editingConsultantNotes ? (
+              <textarea
+                autoFocus
+                className="field"
+                value={consultantDraft}
+                onChange={(e) => setConsultantDraft(e.target.value)}
+                rows={Math.max(4, (consultantDraft || "").split("\n").length + 1)}
+                style={{ fontSize: 12, resize: "vertical", width: "100%", lineHeight: 1.6, fontFamily: "inherit" }}
+                onBlur={() => { if (consultantDraft === (lead.consultantNotes || "")) setEditingConsultantNotes(false); }}
+              />
+            ) : consultantDraft ? (
+              <div
+                onClick={() => setEditingConsultantNotes(true)}
+                style={{ fontSize: 12, lineHeight: 1.7, color: "var(--ink-2)", whiteSpace: "pre-wrap", cursor: "text", padding: "6px 8px", borderRadius: "var(--r-sm)", border: "1px solid transparent" }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--line)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "transparent")}
+              >
+                {consultantDraft}
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, color: "var(--ink-3)", fontStyle: "italic" }}>No consultant notes yet.</div>
+            )}
+          </div>
 
           {/* Counselor Intel */}
           {rosterMatch && (
@@ -699,6 +868,102 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
                 }}
               >
                 Save Appointment
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Automation Email Modal ─────────────────────────────────── */}
+      {automationModal && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setAutomationModal(null)} />
+          <div style={{
+            position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+            zIndex: 401, background: "var(--surface)", borderRadius: "var(--r-lg)",
+            padding: 24, width: "min(520px, 92vw)", boxShadow: "0 8px 40px rgba(0,0,0,.18)",
+            display: "grid", gap: 16,
+          }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>
+                  ⚡ Automation Triggered
+                </div>
+                <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{automationModal.rule.name}</div>
+              </div>
+              <button className="btn btn-sm btn-ghost" onClick={() => setAutomationModal(null)}
+                style={{ fontSize: 16, padding: "0 6px", lineHeight: 1 }}>×</button>
+            </div>
+
+            {/* Recipients */}
+            <div>
+              <div className="detail-label" style={{ marginBottom: 6 }}>Send to</div>
+              {automationModal.recipients.length > 0 ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {automationModal.recipients.map((email) => (
+                    <span key={email} style={{
+                      fontSize: 12, padding: "3px 10px", borderRadius: 99,
+                      background: "var(--accent-soft)", color: "var(--accent)", fontWeight: 500,
+                    }}>{email}</span>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: "var(--warning)", fontWeight: 500 }}>
+                  ⚠ No email address on file for this lead — update contact info first.
+                </div>
+              )}
+            </div>
+
+            {/* Subject */}
+            <div>
+              <div className="detail-label" style={{ marginBottom: 4 }}>Subject</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>{automationModal.subject}</div>
+            </div>
+
+            {/* Body preview */}
+            <div>
+              <div className="detail-label" style={{ marginBottom: 4 }}>Body</div>
+              <div style={{
+                fontSize: 12, color: "var(--ink-2)", lineHeight: 1.7, whiteSpace: "pre-wrap",
+                background: "var(--bg)", padding: "10px 12px", borderRadius: "var(--r-md)",
+                border: "1px solid var(--line)", maxHeight: 180, overflowY: "auto",
+              }}>
+                {automationModal.body}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="btn btn-ghost" onClick={() => setAutomationModal(null)}
+                style={{ fontSize: 13 }}>
+                Dismiss
+              </button>
+              <button
+                className="btn"
+                disabled={automationModal.recipients.length === 0}
+                style={{ fontSize: 13, opacity: automationModal.recipients.length > 0 ? 1 : 0.4 }}
+                onClick={() => {
+                  const { recipients, subject, body, rule } = automationModal;
+                  // Open mailto
+                  const to = recipients.join(",");
+                  const mailtoUrl = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                  window.open(mailtoUrl, "_blank");
+                  // Log it
+                  appendLog({
+                    id: Date.now().toString(),
+                    ruleId: rule.id,
+                    ruleName: rule.name,
+                    leadId: lead.id,
+                    studentName: lead.studentName,
+                    sentTo: recipients,
+                    subject,
+                    sentAt: new Date().toISOString(),
+                  });
+                  setAutomationModal(null);
+                }}
+              >
+                📧 Open in Email Client
               </button>
             </div>
           </div>
