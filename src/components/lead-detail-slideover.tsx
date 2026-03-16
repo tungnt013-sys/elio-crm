@@ -357,19 +357,26 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
             )}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
               <div style={{ fontSize: 11, color: uc.color, fontWeight: 500 }}>Deadline:</div>
-              {isAdmin ? (
-                <input
-                  type="date"
-                  className="field"
-                  value={lead.deadline || ""}
-                  onChange={(e) => onUpdate(lead.id, { deadline: e.target.value })}
-                  style={{ fontSize: 11, padding: "2px 6px", width: "auto", color: isOverdue ? "var(--danger)" : undefined }}
-                />
-              ) : (
-                <span style={{ fontSize: 12, fontWeight: 500, color: isOverdue ? "var(--danger)" : uc.color }}>
-                  {lead.deadline || "—"}
-                </span>
-              )}
+              {(() => {
+                const adminRuleActive = loadActionRules().some(
+                  (r) => r.isActive && r.triggerStatus === lead.status && r.steps.some((s) => s.type === "setDeadline")
+                );
+                const canEdit = isAdmin || (!adminRuleActive && !isReadOnly);
+                return canEdit ? (
+                  <input
+                    type="date"
+                    className="field"
+                    value={lead.deadline || ""}
+                    onChange={(e) => onUpdate(lead.id, { deadline: e.target.value })}
+                    style={{ fontSize: 11, padding: "2px 6px", width: "auto", color: isOverdue ? "var(--danger)" : undefined }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 12, fontWeight: 500, color: isOverdue ? "var(--danger)" : uc.color }}
+                    title="Set by admin automation">
+                    {lead.deadline || "—"}
+                  </span>
+                );
+              })()}
               {isOverdue && <span style={{ fontSize: 11, color: "var(--danger)", fontWeight: 600 }}>Overdue</span>}
             </div>
           </div>
