@@ -3,6 +3,7 @@ import Google from "next-auth/providers/google";
 
 // Minimal config for Edge middleware — no Node.js modules
 export const authConfig: NextAuthConfig = {
+  trustHost: true,
   session: { strategy: "jwt" },
   providers: [
     Google({
