@@ -553,9 +553,9 @@ export default function CounselorPage() {
         {s6Count > 0 && (
           <div style={{ display: "flex", gap: 4, background: "var(--bg-2)", padding: 3, borderRadius: "var(--r-md)" }}>
             {([
-              { key: "students",    label: "My Students" },
-              { key: "prospecting", label: "Prospecting Students", badge: s6Count },
-            ] as const).map(({ key, label, badge }) => (
+              { key: "students"    as "students" | "prospecting", label: "My Students",           badge: undefined as number | undefined },
+              { key: "prospecting" as "students" | "prospecting", label: "Prospecting Students", badge: s6Count as number | undefined },
+            ]).map(({ key, label, badge }) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
