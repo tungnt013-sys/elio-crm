@@ -5,21 +5,18 @@
 import { MongoClient } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI;
-<<<<<<< Updated upstream
-=======
 if (!MONGODB_URI) {
   console.error("Error: MONGODB_URI environment variable is required.");
-  console.error("Usage: MONGODB_URI=\"mongodb+srv://...\" npx tsx src/scripts/seed-users.ts");
+  console.error('Usage: MONGODB_URI="mongodb+srv://..." npx tsx src/scripts/seed-users.ts');
   process.exit(1);
 }
->>>>>>> Stashed changes
 
 const INITIAL_USERS = [
-  { email: "duc@elio.education",      name: "Đức",    role: "ADMIN" },
-  { email: "phuong@elio.education",   name: "Phương", role: "ADMIN" },
-  { email: "tung@elio.education",     name: "Tùng",   role: "ADMIN" },
-  { email: "hang.nm@elio.education",  name: "Hằng",   role: "SALES" },
-  { email: "chi.tm@elio.education",   name: "Chi",    role: "SALES_VIEW" },
+  { email: "duc@elio.education",     name: "Đức",    role: "ADMIN" },
+  { email: "phuong@elio.education",  name: "Phương", role: "ADMIN" },
+  { email: "tung@elio.education",    name: "Tùng",   role: "ADMIN" },
+  { email: "hang.nm@elio.education", name: "Hằng",   role: "SALES" },
+  { email: "chi.tm@elio.education",  name: "Chi",    role: "SALES_VIEW" },
 ];
 
 async function main() {
