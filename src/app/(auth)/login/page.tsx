@@ -49,22 +49,20 @@ function LoginContent() {
         </button>
 
         {IS_DEV && (
-          <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
-            <p style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "center", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Dev login
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <p style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "center", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Staging — select user
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {DEV_USERS.map((u) => (
-                <button
-                  key={u.email}
-                  className="btn btn-ghost"
-                  style={{ fontSize: 13, justifyContent: "flex-start", padding: "6px 10px" }}
-                  onClick={() => signIn("dev", { email: u.email, callbackUrl: "/sales" })}
-                >
-                  {u.name}
-                </button>
-              ))}
-            </div>
+            {DEV_USERS.map((u) => (
+              <button
+                key={u.email}
+                className="btn btn-primary"
+                style={{ fontSize: 13, justifyContent: "flex-start", padding: "8px 14px" }}
+                onClick={() => signIn("dev", { email: u.email, callbackUrl: "/sales" })}
+              >
+                {u.name}
+              </button>
+            ))}
           </div>
         )}
       </div>
