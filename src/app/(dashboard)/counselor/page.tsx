@@ -53,6 +53,7 @@ function GamePlanModal({
   const [items, setItems] = useState<GamePlanItem[]>(existing?.items ?? []);
   const [flags, setFlags] = useState<string[]>(existing?.flags ?? student.issues ?? []);
   const [flagDraft, setFlagDraft] = useState("");
+  const [confirmDone, setConfirmDone] = useState(false);
 
   const addFlag = () => {
     const trimmed = flagDraft.trim();
@@ -231,18 +232,45 @@ function GamePlanModal({
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          {!isDone ? (
-            <button className="btn btn-ghost" onClick={onMarkDone} style={{ fontSize: 12, color: "var(--ink-3)" }}>
-              ✓ Mark student as Done
+        {!isDone && (
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16, marginTop: 4 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 13, color: "var(--warning)", marginTop: 1 }}>⚠</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", marginBottom: 2 }}>Mark as Done</div>
+                <div style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>
+                  This removes the student from your active list. This action cannot be undone easily.
+                </div>
+              </div>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: "var(--ink-2)" }}>
+              <input
+                type="checkbox"
+                checked={confirmDone}
+                onChange={(e) => setConfirmDone(e.target.checked)}
+                style={{ width: 14, height: 14, accentColor: "var(--danger)", cursor: "pointer" }}
+              />
+              I confirm this student&apos;s counseling is complete
+            </label>
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={() => { if (confirmDone) onMarkDone(); }}
+              disabled={!confirmDone}
+              style={{ marginTop: 10, opacity: confirmDone ? 1 : 0.4, cursor: confirmDone ? "pointer" : "not-allowed" }}
+            >
+              Mark as Done
             </button>
-          ) : (
-            <span className="badge badge-done" style={{ fontSize: 12 }}>Done</span>
-          )}
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-            <button className="btn" onClick={() => onSave({ keyNotes, items, flags })}>Save Game Plan</button>
           </div>
+        )}
+        {isDone && (
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+            <span className="badge badge-done" style={{ fontSize: 12 }}>Done</span>
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn" onClick={() => onSave({ keyNotes, items, flags })}>Save Game Plan</button>
         </div>
       </div>
     </div>
@@ -703,29 +731,25 @@ export default function CounselorPage() {
                   padding: "12px 16px", borderBottom: "1px solid var(--line)",
                   cursor: "pointer", transition: "background 120ms",
                 }}
-                onClick={() => setSlideoverStudentId(student.id)}
+                onClick={() => setModalStudentId(student.id)}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-2)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "")}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Link
-                    href={`/students/${student.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ fontWeight: 500, fontSize: 13, color: "inherit", textDecoration: "none" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-                    onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-                  >
-                    {student.fullName}
-                  </Link>
+                  <span style={{ fontWeight: 500, fontSize: 13 }}>{student.fullName}</span>
                   <span className={`badge ${BADGE_CLASS[student.group]}`}>{student.level}</span>
                   <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Assigned to {student.assignedTo}</span>
                   {student.issues.slice(0, 1).map((flag, i) => (
                     <span key={i} style={{ fontSize: 11, color: "var(--danger)" }}>⚑ {flag}</span>
                   ))}
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={(e) => { e.stopPropagation(); setSlideoverStudentId(student.id); }}
+                    style={{ fontSize: 11, color: "var(--ink-3)", marginLeft: 2 }}
+                  >
+                    Background Details →
+                  </button>
                 </div>
-                <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); setModalStudentId(student.id); }}>
-                  Set up game plan →
-                </button>
               </div>
             ))}
           </div>
@@ -776,13 +800,6 @@ export default function CounselorPage() {
                     {openCount > 0 && (
                       <span style={{ fontSize: 11, color: "var(--ink-3)" }}>{openCount} open</span>
                     )}
-                    <button
-                      className="btn btn-sm btn-ghost"
-                      onClick={(e) => { e.stopPropagation(); markStudentDone(student.id); }}
-                      style={{ fontSize: 11, color: "var(--ink-3)" }}
-                    >
-                      Mark done
-                    </button>
                     <span
                       className="badge"
                       style={{
