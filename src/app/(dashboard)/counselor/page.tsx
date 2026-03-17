@@ -475,17 +475,22 @@ export default function CounselorPage() {
   const userName = session?.user?.name ?? "Counselor";
   const [activeTab, setActiveTab] = useState<"students" | "prospecting">("students");
 
-  const [gamePlans, setGamePlansState] = useState<Record<string, GamePlan>>(() => {
-    if (typeof window === "undefined") return {};
-    try { return JSON.parse(localStorage.getItem("elio:gamePlans") ?? "{}"); } catch { return {}; }
-  });
-  const [doneStudents, setDoneStudentsState] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id));
+  const [gamePlans, setGamePlansState] = useState<Record<string, GamePlan>>({});
+  const [doneStudents, setDoneStudentsState] = useState<Set<string>>(
+    new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id))
+  );
+
+  // Load from localStorage after mount to avoid SSR/client hydration mismatch
+  useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem("elio:doneStudents") ?? "null");
-      return saved ? new Set<string>(saved) : new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id));
-    } catch { return new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id)); }
-  });
+      const savedPlans = JSON.parse(localStorage.getItem("elio:gamePlans") ?? "{}");
+      if (Object.keys(savedPlans).length > 0) setGamePlansState(savedPlans);
+    } catch {}
+    try {
+      const savedDone = JSON.parse(localStorage.getItem("elio:doneStudents") ?? "null");
+      if (savedDone) setDoneStudentsState(new Set<string>(savedDone));
+    } catch {}
+  }, []);
 
   const setGamePlans = (val: Record<string, GamePlan> | ((prev: Record<string, GamePlan>) => Record<string, GamePlan>)) => {
     setGamePlansState((prev) => {
@@ -627,7 +632,7 @@ export default function CounselorPage() {
                   <span style={{
                     fontSize: 10, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 99,
                     background: activeTab === key ? "var(--accent)" : "var(--ink-3)",
-                    color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    color: "var(--bg)", display: "inline-flex", alignItems: "center", justifyContent: "center",
                     padding: "0 4px",
                   }}>
                     {badge}

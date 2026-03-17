@@ -5,7 +5,7 @@ import { MOCK_CONTRACTS } from "@/lib/mock-data";
 const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
   ACTIVE:    { bg: "var(--success-bg)", color: "var(--success)", label: "Active" },
   SIGNED:    { bg: "var(--accent-soft)", color: "var(--accent)", label: "Signed" },
-  SENT:      { bg: "var(--warning-bg)", color: "#B45309", label: "Sent" },
+  SENT:      { bg: "var(--warning-bg)", color: "var(--badge-yellow-text)", label: "Sent" },
   DRAFT:     { bg: "var(--bg-2)", color: "var(--ink-2)", label: "Draft" },
   COMPLETED: { bg: "var(--bg-2)", color: "var(--ink-3)", label: "Completed" },
 };

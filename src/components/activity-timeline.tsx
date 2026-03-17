@@ -12,13 +12,13 @@ type ActivityRow = {
 };
 
 const TYPE_COLOR: Record<string, string> = {
-  CALL:            "#173F36",
-  TEXT:            "#1E6B44",
-  EMAIL:           "#B86A10",
-  ZALO:            "#2A6654",
-  MEETING:         "#D95E1A",
-  NOTE:            "#5F6B69",
-  DOCUMENT_UPLOAD: "#B83232",
+  CALL:            "var(--success)",
+  TEXT:            "#16A34A",
+  EMAIL:           "var(--warning)",
+  ZALO:            "#0891B2",
+  MEETING:         "#EA580C",
+  NOTE:            "var(--ink-3)",
+  DOCUMENT_UPLOAD: "var(--danger)",
 };
 
 const TYPE_LABEL: Record<string, string> = {

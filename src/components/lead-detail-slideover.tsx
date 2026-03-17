@@ -158,8 +158,8 @@ function stageNum(status: string): number {
 const MEDIUM_COLORS: Record<string, string> = {
   phone: "var(--accent)",
   email: "var(--success)",
-  "in-person": "#6D28D9",
-  sms: "#D97706",
+  "in-person": "var(--contact-in-person)",
+  sms: "var(--contact-sms)",
   other: "var(--ink-3)",
 };
 
@@ -177,7 +177,7 @@ export function LeadDetailSlideover({ lead, overrides, onUpdate, onClose }: Prop
 
   const urgencyColors = {
     high: { bg: "var(--danger-soft)", color: "var(--danger)", border: "var(--danger)" },
-    medium: { bg: "var(--warning-bg)", color: "#92400E", border: "var(--warning)" },
+    medium: { bg: "var(--warning-bg)", color: "var(--badge-amber-text)", border: "var(--warning)" },
     low: { bg: "var(--bg-2)", color: "var(--ink-2)", border: "var(--line)" },
     none: { bg: "var(--success-bg)", color: "var(--success)", border: "var(--success)" },
   };

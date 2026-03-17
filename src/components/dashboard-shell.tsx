@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, createContext, useContext } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { SearchBar } from "@/components/search-bar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { UserRole } from "@/lib/roles";
 
 // UI role: what view is active in the shell
@@ -219,6 +220,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </button>
               <SearchBar />
             </div>
+            <ThemeToggle />
             {isAdmin && (
               <div style={{ display: "flex", gap: 2 }}>
                 {(["sales", "counselor", "admin"] as Role[]).map((r) => (

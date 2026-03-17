@@ -283,7 +283,7 @@ function ActionRuleForm({
             <span style={{
               position: "absolute", top: 2,
               left: deadlineEnabled ? 16 : 2,
-              width: 14, height: 14, borderRadius: "50%", background: "#fff",
+              width: 14, height: 14, borderRadius: "50%", background: "var(--surface)",
               transition: "left 200ms", boxShadow: "0 1px 2px rgba(0,0,0,.2)",
             }} />
           </span>
@@ -341,7 +341,7 @@ function ActionRuleForm({
             <span style={{
               position: "absolute", top: 2,
               left: emailEnabled ? 16 : 2,
-              width: 14, height: 14, borderRadius: "50%", background: "#fff",
+              width: 14, height: 14, borderRadius: "50%", background: "var(--surface)",
               transition: "left 200ms", boxShadow: "0 1px 2px rgba(0,0,0,.2)",
             }} />
           </span>
@@ -472,12 +472,12 @@ export default function AutomationsPage() {
 
   // ── Shared helpers ──────────────────────────────────────────────────────────
   const statusStyle = (s: string) => {
-    if (s.startsWith("S1") || s.startsWith("S2")) return { bg: "#FEF3C7", color: "#92400E" };
+    if (s.startsWith("S1") || s.startsWith("S2")) return { bg: "var(--badge-amber-bg)", color: "var(--badge-amber-text)" };
     if (s.startsWith("S5") || s.startsWith("S6")) return { bg: "var(--accent-soft)", color: "var(--accent)" };
-    if (s.startsWith("S9") || s.startsWith("S8") || s.startsWith("S7")) return { bg: "#F0F0FF", color: "#6D28D9" };
+    if (s.startsWith("S9") || s.startsWith("S8") || s.startsWith("S7")) return { bg: "var(--badge-purple-bg)", color: "var(--badge-purple-text)" };
     if (s.includes("S10")) return { bg: "var(--success-bg)", color: "var(--success)" };
     if (s.includes("S11") || s.includes("S12")) return { bg: "var(--danger-soft)", color: "var(--danger)" };
-    if (s.includes("S13")) return { bg: "var(--warning-bg)", color: "#92400E" };
+    if (s.includes("S13")) return { bg: "var(--warning-bg)", color: "var(--badge-amber-text)" };
     return { bg: "var(--bg-2)", color: "var(--ink-2)" };
   };
 
@@ -538,7 +538,7 @@ export default function AutomationsPage() {
           >
             {label}
             {count !== undefined && (
-              <span style={{ fontSize: 10, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 99, background: "var(--ink-3)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 99, background: "var(--ink-3)", color: "var(--bg)", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
                 {count}
               </span>
             )}
@@ -591,7 +591,7 @@ export default function AutomationsPage() {
                     title={rule.isActive ? "Disable rule" : "Enable rule"}
                     style={{ width: 32, height: 18, borderRadius: 99, border: "none", cursor: "pointer", background: rule.isActive ? "var(--accent)" : "var(--line)", position: "relative", flexShrink: 0, transition: "background 200ms" }}
                   >
-                    <span style={{ position: "absolute", top: 2, left: rule.isActive ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left 200ms", boxShadow: "0 1px 2px rgba(0,0,0,.2)" }} />
+                    <span style={{ position: "absolute", top: 2, left: rule.isActive ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "var(--surface)", transition: "left 200ms", boxShadow: "0 1px 2px rgba(0,0,0,.2)" }} />
                   </button>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -619,7 +619,7 @@ export default function AutomationsPage() {
                     )}
                     {emailDeleteConfirm === rule.id ? (
                       <>
-                        <button className="btn btn-sm" onClick={() => deleteEmailRule(rule.id)} style={{ fontSize: 12, background: "var(--danger)", color: "#fff", border: "none" }}>Delete</button>
+                        <button className="btn btn-sm" onClick={() => deleteEmailRule(rule.id)} style={{ fontSize: 12, background: "var(--danger)", color: "var(--on-solid)", border: "none" }}>Delete</button>
                         <button className="btn btn-sm btn-ghost" onClick={() => setEmailDeleteConfirm(null)} style={{ fontSize: 12 }}>Cancel</button>
                       </>
                     ) : (
@@ -653,7 +653,7 @@ export default function AutomationsPage() {
           {!isAdmin && (
             <div style={{ padding: "10px 14px", background: "var(--warning-bg)", borderRadius: "var(--r-md)", border: "1px solid var(--warning)", display: "flex", alignItems: "center", gap: 8 }}>
               <span>🔒</span>
-              <span style={{ fontSize: 13, color: "#92400E" }}>Action rules can only be created and edited by Admins.</span>
+              <span style={{ fontSize: 13, color: "var(--badge-amber-text)" }}>Action rules can only be created and edited by Admins.</span>
             </div>
           )}
 
@@ -699,15 +699,15 @@ export default function AutomationsPage() {
                   <button
                     onClick={() => isAdmin && toggleActionActive(rule.id)}
                     title={isAdmin ? (rule.isActive ? "Disable rule" : "Enable rule") : "Admin only"}
-                    style={{ width: 32, height: 18, borderRadius: 99, border: "none", cursor: isAdmin ? "pointer" : "not-allowed", background: rule.isActive ? "#6D28D9" : "var(--line)", position: "relative", flexShrink: 0, transition: "background 200ms" }}
+                    style={{ width: 32, height: 18, borderRadius: 99, border: "none", cursor: isAdmin ? "pointer" : "not-allowed", background: rule.isActive ? "var(--badge-purple-text)" : "var(--line)", position: "relative", flexShrink: 0, transition: "background 200ms" }}
                   >
-                    <span style={{ position: "absolute", top: 2, left: rule.isActive ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left 200ms", boxShadow: "0 1px 2px rgba(0,0,0,.2)" }} />
+                    <span style={{ position: "absolute", top: 2, left: rule.isActive ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "var(--surface)", transition: "left 200ms", boxShadow: "0 1px 2px rgba(0,0,0,.2)" }} />
                   </button>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>{rule.name}</div>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 99, background: "#F0F0FF", color: "#6D28D9", letterSpacing: "0.03em" }}>ADMIN</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 99, background: "var(--badge-purple-bg)", color: "var(--badge-purple-text)", letterSpacing: "0.03em" }}>ADMIN</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 11, color: "var(--ink-3)" }}>When →</span>
@@ -717,7 +717,7 @@ export default function AutomationsPage() {
                       {deadlineStep && (
                         <>
                           <span style={{ fontSize: 11, color: "var(--ink-3)" }}>→ deadline</span>
-                          <span style={{ fontSize: 11, padding: "1px 7px", borderRadius: 99, background: "#F0F0FF", color: "#6D28D9", fontWeight: 500 }}>
+                          <span style={{ fontSize: 11, padding: "1px 7px", borderRadius: 99, background: "var(--badge-purple-bg)", color: "var(--badge-purple-text)", fontWeight: 500 }}>
                             +{deadlineStep.days} {deadlineStep.basis} days
                           </span>
                         </>
@@ -740,7 +740,7 @@ export default function AutomationsPage() {
                       )}
                       {actionDeleteConfirm === rule.id ? (
                         <>
-                          <button className="btn btn-sm" onClick={() => deleteActionRule(rule.id)} style={{ fontSize: 12, background: "var(--danger)", color: "#fff", border: "none" }}>Delete</button>
+                          <button className="btn btn-sm" onClick={() => deleteActionRule(rule.id)} style={{ fontSize: 12, background: "var(--danger)", color: "var(--on-solid)", border: "none" }}>Delete</button>
                           <button className="btn btn-sm btn-ghost" onClick={() => setActionDeleteConfirm(null)} style={{ fontSize: 12 }}>Cancel</button>
                         </>
                       ) : (

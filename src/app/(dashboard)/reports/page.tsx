@@ -24,7 +24,7 @@ function DonutChart({ slices, title, total }: { slices: { label: string; value: 
       <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
         <svg width="112" height="112" viewBox="0 0 112 112" style={{ flexShrink: 0 }}>
           {arcs.map((a, i) => <path key={i} d={a.path} fill={a.color} />)}
-          <circle cx={cx} cy={cy} r={22} fill="white" />
+          <circle cx={cx} cy={cy} r={22} fill="var(--surface)" />
           <text x={cx} y={cy + 4} textAnchor="middle" fontSize="13" fontWeight="700" fill="var(--ink)">{total}</text>
         </svg>
         <div style={{ display: "grid", gap: 4, flex: 1 }}>
@@ -48,16 +48,16 @@ export default function ReportsPage() {
   const leadOutcomes = [
     { label: "Won", value: stats.won, color: "var(--success)" },
     { label: "Warm Lead", value: stats.warmLead, color: "var(--warning)" },
-    { label: "Lost - Not Fit", value: stats.lostNotFit, color: "#999" },
+    { label: "Lost - Not Fit", value: stats.lostNotFit, color: "var(--ink-3)" },
     { label: "Lost - No Contact", value: stats.lostNoContact, color: "var(--danger)" },
     { label: "In Progress", value: stats.proposalSent + stats.proposalPending + stats.appointmentScheduled, color: "var(--accent)" },
   ];
 
   const studentByLevel = [
-    { label: "Graduate", value: STUDENT_ROSTER.filter((s) => s.group === "grad").length, color: "#1D4ED8" },
-    { label: "Undergrad G11", value: STUDENT_ROSTER.filter((s) => s.group === "g11").length, color: "#15803D" },
-    { label: "Undergrad G9", value: STUDENT_ROSTER.filter((s) => s.group === "g9").length, color: "#B45309" },
-    { label: "Done", value: STUDENT_ROSTER.filter((s) => s.group === "done").length, color: "#999" },
+    { label: "Graduate", value: STUDENT_ROSTER.filter((s) => s.group === "grad").length, color: "var(--badge-blue-text)" },
+    { label: "Undergrad G11", value: STUDENT_ROSTER.filter((s) => s.group === "g11").length, color: "var(--badge-green-text)" },
+    { label: "Undergrad G9", value: STUDENT_ROSTER.filter((s) => s.group === "g9").length, color: "var(--badge-yellow-text)" },
+    { label: "Done", value: STUDENT_ROSTER.filter((s) => s.group === "done").length, color: "var(--ink-3)" },
   ];
 
   const contractStatuses = [

@@ -11,7 +11,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Prevent flash of wrong theme — runs before CSS paints */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('elio:theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}` }} />
+      </head>
       <body>
         <Providers>
           <div className="app-shell">{children}</div>

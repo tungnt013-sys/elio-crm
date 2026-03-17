@@ -96,11 +96,11 @@ function stageNum(status: string): number {
 
 function statusStyle(status: string) {
   if (status.includes("S10")) return { bg: "var(--success-bg)", color: "var(--success)" };
-  if (status.startsWith("S1 ") || status.startsWith("S2 ")) return { bg: "#FEF3C7", color: "#92400E" };
-  if (status.startsWith("S9") || status.startsWith("S8 ") || status.startsWith("S7 ")) return { bg: "#F0F0FF", color: "#6D28D9" };
+  if (status.startsWith("S1 ") || status.startsWith("S2 ")) return { bg: "var(--badge-amber-bg)", color: "var(--badge-amber-text)" };
+  if (status.startsWith("S9") || status.startsWith("S8 ") || status.startsWith("S7 ")) return { bg: "var(--badge-purple-bg)", color: "var(--badge-purple-text)" };
   if (status.startsWith("S5 ") || status.startsWith("S6 ")) return { bg: "var(--accent-soft)", color: "var(--accent)" };
   if (status.includes("S11") || status.includes("S12")) return { bg: "var(--danger-soft)", color: "var(--danger)" };
-  if (status.includes("S13")) return { bg: "var(--warning-bg)", color: "#92400E" };
+  if (status.includes("S13")) return { bg: "var(--warning-bg)", color: "var(--badge-amber-text)" };
   return { bg: "var(--bg-2)", color: "var(--ink-2)" };
 }
 
@@ -308,7 +308,7 @@ export default function SalesPage() {
               {unseenProposals.length > 0 && (
                 <span style={{
                   fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 99,
-                  background: "var(--accent)", color: "#fff",
+                  background: "var(--accent)", color: "var(--on-solid)",
                 }}>
                   {unseenProposals.length} new
                 </span>
