@@ -60,6 +60,28 @@ const NAV: { href: string; label: string; roles: Role[]; icon: React.ReactNode; 
     ),
   },
   {
+    href: "/counselor/tasks",
+    label: "Tasks",
+    roles: ["counselor", "admin"],
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M4.5 6.5l1.5 1.5 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    href: "/counselor/proposal",
+    label: "AI Gen",
+    roles: ["counselor", "admin"],
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M7 1.5l1.2 3.3L11.5 6 8.2 7.2 7 10.5 5.8 7.2 2.5 6l3.3-1.2L7 1.5z" fill="currentColor" />
+        <path d="M11.5 9.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6.6-1.4z" fill="currentColor" opacity=".6" />
+      </svg>
+    ),
+  },
+  {
     href: "/reports",
     label: "Reports",
     roles: ["admin", "sales", "sales_view"],
@@ -181,7 +203,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             {visibleNav.map((item) => {
               const showSection = item.section && item.section !== lastSection;
               if (item.section) lastSection = item.section;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              // Exact match, or prefix match only if no other nav item owns the sub-path
+              const isActive = pathname === item.href ||
+                (pathname.startsWith(item.href + "/") && !visibleNav.some((other) => other !== item && pathname.startsWith(other.href)));
               return (
                 <div key={item.href}>
                   {showSection && <div className="nav-section-label">{item.section}</div>}

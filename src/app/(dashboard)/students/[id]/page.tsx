@@ -3,7 +3,7 @@
 import { use, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { STUDENT_ROSTER, type StudentDetail } from "@/lib/mock-data";
+import { STUDENT_ROSTER, SEED_TOUCHPOINTS, SEED_GAME_PLANS, type StudentDetail } from "@/lib/mock-data";
 import { ALL_LEADS } from "@/lib/all-leads";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ type TouchPoint = {
   addedBy: string;
 };
 
-type GamePlanItem = { id: string; item: string; deadline: string; byWho: string; done: boolean };
+type GamePlanItem = { id: string; item: string; deadline: string; byWho: string | string[]; done: boolean };
 type GamePlan = { keyNotes: string; items: GamePlanItem[]; flags: string[] };
 
 type ProposalEntry = { url: string; submittedBy: string; submittedAt: string; seen: boolean };
@@ -161,7 +161,13 @@ function TouchPoints({ studentId, userName }: { studentId: string; userName: str
   });
 
   useEffect(() => {
-    setPoints(readStore<TouchPoint[]>(LS.touchpoints(studentId), []));
+    const stored = readStore<TouchPoint[]>(LS.touchpoints(studentId), []);
+    if (stored.length > 0) {
+      setPoints(stored);
+    } else {
+      const seed = (SEED_TOUCHPOINTS[studentId] ?? []) as TouchPoint[];
+      setPoints(seed);
+    }
   }, [studentId]);
 
   const save = () => {
@@ -357,7 +363,12 @@ function KeyNotesSection({ studentId, canEdit }: { studentId: string; canEdit: b
 
   useEffect(() => {
     const plans = readStore<Record<string, GamePlan>>(LS.gamePlans, {});
-    setPlan(plans[studentId] ?? null);
+    if (plans[studentId]) {
+      setPlan(plans[studentId]);
+    } else {
+      const seed = SEED_GAME_PLANS[studentId] ?? null;
+      setPlan(seed as GamePlan | null);
+    }
   }, [studentId]);
 
   const startEdit = () => { setDraft(plan?.keyNotes ?? ""); setEditing(true); };

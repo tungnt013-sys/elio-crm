@@ -1,28 +1,12 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { STUDENT_ROSTER, type StudentDetail } from "@/lib/mock-data";
+import { STUDENT_ROSTER, SEED_GAME_PLANS, type StudentDetail } from "@/lib/mock-data";
 import { ALL_LEADS, type LeadOverrides } from "@/lib/all-leads";
 import { LeadDetailSlideover } from "@/components/lead-detail-slideover";
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-type GamePlanItem = {
-  id: string;
-  item: string;
-  deadline: string;
-  byWho: string;
-  done: boolean;
-};
-
-type GamePlan = {
-  keyNotes: string;
-  items: GamePlanItem[];
-  flags: string[];
-};
+import { GamePlanModal, normalizeByWho, type GamePlan, type GamePlanItem } from "./_components/game-plan-modal";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -33,284 +17,13 @@ const BADGE_CLASS: Record<string, string> = {
   done: "badge-done",
 };
 
-// ── GamePlanModal ─────────────────────────────────────────────────────────────
-
-function GamePlanModal({
-  student,
-  existing,
-  isDone,
-  onSave,
-  onMarkDone,
-  onClose,
-}: {
-  student: StudentDetail;
-  existing?: GamePlan;
-  isDone: boolean;
-  onSave: (plan: GamePlan) => void;
-  onMarkDone: () => void;
-  onClose: () => void;
-}) {
-  const [keyNotes, setKeyNotes] = useState(existing?.keyNotes ?? "");
-  const [editingKeyNotes, setEditingKeyNotes] = useState(!existing?.keyNotes);
-  const [items, setItems] = useState<GamePlanItem[]>(existing?.items ?? []);
-  const [flags, setFlags] = useState<string[]>(existing?.flags ?? student.issues ?? []);
-  const [flagDraft, setFlagDraft] = useState("");
-  const [confirmDone, setConfirmDone] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const addFlag = () => {
-    const trimmed = flagDraft.trim();
-    if (!trimmed) return;
-    setFlags((prev) => [...prev, trimmed]);
-    setFlagDraft("");
-  };
-
-  const addItem = () =>
-    setItems((prev) => [
-      ...prev,
-      { id: Date.now().toString(), item: "", deadline: "", byWho: "", done: false },
-    ]);
-
-  const updateItem = (id: string, patch: Partial<GamePlanItem>) =>
-    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
-
-  const removeItem = (id: string) =>
-    setItems((prev) => prev.filter((it) => it.id !== id));
-
-  const wordCount = keyNotes.split(/\s+/).filter(Boolean).length;
-
-  if (!mounted) return null;
-  return createPortal(
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} onClick={onClose} />
-      <div style={{
-        position: "relative", zIndex: 1,
-        background: "var(--bg)", borderRadius: "var(--r-lg)", padding: 24,
-        width: "min(700px, 95vw)", maxHeight: "90vh", overflowY: "auto",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
-      }}>
-        {/* See full profile link */}
-        <div style={{ marginBottom: 14 }}>
-          <Link
-            href={`/students/${student.id}`}
-            onClick={onClose}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 5,
-              fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500,
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
-              <path d="M4.5 6h3M6 4.5l1.5 1.5L6 7.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            See full profile
-          </Link>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>{student.fullName}</div>
-            <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-              {student.level} · Assigned to {student.assignedTo}
-            </div>
-          </div>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
-        </div>
-
-        <div style={{ marginBottom: 20 }}>
-          <div className="detail-label" style={{ marginBottom: 6 }}>Key Notes</div>
-          {editingKeyNotes ? (
-            <>
-              <textarea
-                value={keyNotes}
-                onChange={(e) => setKeyNotes(e.target.value)}
-                placeholder="Describe the student's situation, goals, approach, and anything the counselor team needs to know (~300 words)…"
-                rows={7}
-                className="field"
-                autoFocus
-                onBlur={() => setEditingKeyNotes(false)}
-                style={{ width: "100%", resize: "vertical", fontSize: 13, lineHeight: 1.6 }}
-              />
-              <div style={{ fontSize: 11, color: wordCount > 300 ? "var(--danger)" : "var(--ink-3)", marginTop: 4, textAlign: "right" }}>
-                {wordCount} / 300 words
-              </div>
-            </>
-          ) : (
-            <div
-              onClick={() => setEditingKeyNotes(true)}
-              style={{
-                fontSize: 13, lineHeight: 1.6, color: keyNotes ? "var(--ink)" : "var(--ink-3)",
-                fontStyle: keyNotes ? "normal" : "italic",
-                padding: "8px 10px", borderRadius: "var(--r-sm)", cursor: "text",
-                border: "1px solid var(--line)", background: "var(--bg)",
-                whiteSpace: "pre-wrap", minHeight: 80,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-2)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg)")}
-            >
-              {keyNotes || "Click to add key notes…"}
-            </div>
-          )}
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <div className="detail-label">Action Items</div>
-            <button className="btn btn-sm btn-ghost" onClick={addItem}>+ Add item</button>
-          </div>
-          {items.length > 0 ? (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "var(--bg-2)" }}>
-                  {["Item", "Deadline", "By Who", ""].map((h) => (
-                    <th key={h} style={{ padding: "6px 8px", textAlign: "left", fontSize: 11, fontWeight: 500, color: "var(--ink-3)", borderBottom: "1px solid var(--line)" }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} style={{ borderBottom: "1px solid var(--line)" }}>
-                    <td style={{ padding: "4px 6px", width: "45%" }}>
-                      <input
-                        className="field"
-                        value={item.item}
-                        onChange={(e) => updateItem(item.id, { item: e.target.value })}
-                        placeholder="Action item…"
-                        style={{ width: "100%", fontSize: 12 }}
-                      />
-                    </td>
-                    <td style={{ padding: "4px 6px", width: "20%" }}>
-                      <input
-                        type="date"
-                        className="field"
-                        value={item.deadline}
-                        onChange={(e) => updateItem(item.id, { deadline: e.target.value })}
-                        style={{ fontSize: 12, width: "100%" }}
-                      />
-                    </td>
-                    <td style={{ padding: "4px 6px", width: "28%" }}>
-                      <input
-                        className="field"
-                        value={item.byWho}
-                        onChange={(e) => updateItem(item.id, { byWho: e.target.value })}
-                        placeholder="Who…"
-                        style={{ width: "100%", fontSize: 12 }}
-                      />
-                    </td>
-                    <td style={{ padding: "4px 4px", textAlign: "center", width: 28 }}>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => removeItem(item.id)}
-                        style={{ color: "var(--danger)", fontSize: 13, padding: "0 4px" }}
-                      >
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div style={{ color: "var(--ink-3)", fontSize: 13, padding: "8px 0" }}>
-              No items yet. Click "+ Add item" to start.
-            </div>
-          )}
-        </div>
-
-        {/* Red Flags */}
-        <div style={{ marginBottom: 24 }}>
-          <div className="detail-label" style={{ marginBottom: 8 }}>Red Flags</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-            {flags.map((flag, i) => (
-              <span key={i} style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                background: "var(--danger-soft)", color: "var(--danger)",
-                borderRadius: "var(--r-sm)", padding: "3px 8px", fontSize: 12, fontWeight: 500,
-              }}>
-                ⚑ {flag}
-                <button
-                  onClick={() => setFlags((prev) => prev.filter((_, j) => j !== i))}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", padding: 0, fontSize: 13, lineHeight: 1 }}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-            {flags.length === 0 && (
-              <span style={{ fontSize: 12, color: "var(--ink-3)" }}>No flags.</span>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              className="field"
-              value={flagDraft}
-              onChange={(e) => setFlagDraft(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFlag(); } }}
-              placeholder="Add a red flag…"
-              style={{ flex: 1, fontSize: 12 }}
-            />
-            <button className="btn btn-sm" onClick={addFlag} style={{ flexShrink: 0 }}>Add</button>
-          </div>
-        </div>
-
-        {!isDone && (
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16, marginTop: 4 }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
-              <span style={{ fontSize: 13, color: "var(--warning)", marginTop: 1 }}>⚠</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", marginBottom: 2 }}>Mark as Done</div>
-                <div style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>
-                  This removes the student from your active list. This action cannot be undone easily.
-                </div>
-              </div>
-            </div>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: "var(--ink-2)" }}>
-              <input
-                type="checkbox"
-                checked={confirmDone}
-                onChange={(e) => setConfirmDone(e.target.checked)}
-                style={{ width: 14, height: 14, accentColor: "var(--danger)", cursor: "pointer" }}
-              />
-              I confirm this student&apos;s counseling is complete
-            </label>
-            <button
-              className="btn btn-sm btn-danger"
-              onClick={() => { if (confirmDone) onMarkDone(); }}
-              disabled={!confirmDone}
-              style={{ marginTop: 10, opacity: confirmDone ? 1 : 0.4, cursor: confirmDone ? "pointer" : "not-allowed" }}
-            >
-              Mark as Done
-            </button>
-          </div>
-        )}
-        {isDone && (
-          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-            <span className="badge badge-done" style={{ fontSize: 12 }}>Done</span>
-          </div>
-        )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn" onClick={() => onSave({ keyNotes, items, flags })}>Save Game Plan</button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
 // ── Proposal types ───────────────────────────────────────────────────────────
 
 export type ProposalEntry = {
   url: string;
   submittedBy: string;
-  submittedAt: string; // ISO string
-  seen: boolean;       // has sales opened/acknowledged it
+  submittedAt: string;
+  seen: boolean;
 };
 
 const LS_PROPOSALS = "elio:proposals";
@@ -369,7 +82,6 @@ function ProspectingTab({ submitterName }: { submitterName: string }) {
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
-      {/* Pending proposals */}
       {pending.length > 0 && (
         <div className="panel-flush">
           <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
@@ -377,19 +89,13 @@ function ProspectingTab({ submitterName }: { submitterName: string }) {
             <span style={{ fontSize: 11, color: "var(--warning)" }}>{pending.length} student{pending.length !== 1 ? "s" : ""}</span>
           </div>
           {pending.map((lead) => (
-            <div key={lead.id} style={{
-              padding: "14px 16px", borderBottom: "1px solid var(--line)",
-              display: "grid", gap: 10,
-            }}>
+            <div key={lead.id} style={{ padding: "14px 16px", borderBottom: "1px solid var(--line)", display: "grid", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>{lead.studentName}</span>
                 <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Grade {lead.gradeLevel}</span>
                 <span style={{ fontSize: 12, color: "var(--ink-3)" }}>·</span>
                 <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{lead.school}</span>
-                <span style={{
-                  fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 99,
-                  background: "var(--accent-soft)", color: "var(--accent)",
-                }}>Proposal Pending</span>
+                <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 99, background: "var(--accent-soft)", color: "var(--accent)" }}>Proposal Pending</span>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <input
@@ -415,7 +121,6 @@ function ProspectingTab({ submitterName }: { submitterName: string }) {
         </div>
       )}
 
-      {/* Submitted proposals */}
       {submitted.length > 0 && (
         <div className="panel-flush">
           <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
@@ -480,11 +185,14 @@ export default function CounselorPage() {
     new Set(STUDENT_ROSTER.filter((s) => s.group === "done").map((s) => s.id))
   );
 
-  // Load from localStorage after mount to avoid SSR/client hydration mismatch
   useEffect(() => {
     try {
       const savedPlans = JSON.parse(localStorage.getItem("elio:gamePlans") ?? "{}");
-      if (Object.keys(savedPlans).length > 0) setGamePlansState(savedPlans);
+      if (Object.keys(savedPlans).length > 0) {
+        setGamePlansState(savedPlans);
+      } else {
+        setGamePlansState(SEED_GAME_PLANS as Record<string, GamePlan>);
+      }
     } catch {}
     try {
       const savedDone = JSON.parse(localStorage.getItem("elio:doneStudents") ?? "null");
@@ -567,14 +275,9 @@ export default function CounselorPage() {
   });
   const totalNextItems = nextItemGroups.reduce((n, g) => n + g.items.length, 0);
 
-  // Section 2: Pending Game Plan
   const nextItemsAnyExpanded = nextItemGroups.some(({ student }) => !collapsedGroups.has(student.id));
   const pendingStudents = STUDENT_ROSTER.filter((s) => !gamePlans[s.id] && !doneStudents.has(s.id));
-
-  // Section 3: Active Students (have game plan, not done)
   const activeStudents = STUDENT_ROSTER.filter((s) => gamePlans[s.id] && !doneStudents.has(s.id));
-
-  // Section 4: Done
   const completedStudents = STUDENT_ROSTER.filter((s) => doneStudents.has(s.id));
 
   const studentStatus = (student: StudentDetail) => {
@@ -611,8 +314,8 @@ export default function CounselorPage() {
         <h1 className="page-title" style={{ margin: 0 }}>Counselor Dashboard</h1>
         <div style={{ display: "flex", gap: 4, background: "var(--bg-2)", padding: 3, borderRadius: "var(--r-md)" }}>
             {([
-              { key: "students"    as "students" | "prospecting", label: "My Students",           badge: undefined as number | undefined },
-              { key: "prospecting" as "students" | "prospecting", label: "Prospecting Students", badge: s6Count as number | undefined },
+              { key: "students"    as const, label: "My Students",           badge: undefined as number | undefined },
+              { key: "prospecting" as const, label: "Prospecting Students",  badge: s6Count as number | undefined },
             ]).map(({ key, label, badge }) => (
               <button
                 key={key}
@@ -720,7 +423,7 @@ export default function CounselorPage() {
                                 </span>
                               ) : <span style={{ color: "var(--ink-3)" }}>—</span>}
                             </td>
-                            <td style={{ color: "var(--ink-3)", fontSize: 12 }}>{item.byWho || "—"}</td>
+                            <td style={{ color: "var(--ink-3)", fontSize: 12 }}>{normalizeByWho(item.byWho).join(", ") || "—"}</td>
                             <td>
                               <button
                                 className="btn btn-sm"
@@ -893,7 +596,6 @@ export default function CounselorPage() {
         </div>
       )}
 
-      {/* ── end students tab ─────────────────────────────────────────── */}
       </>)}
 
       {/* ── Student Slideover (sales-style) ──────────────────────────── */}

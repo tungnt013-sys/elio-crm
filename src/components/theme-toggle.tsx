@@ -33,12 +33,14 @@ function starPath(s: number) {
 }
 
 export function ThemeToggle() {
-  const [theme,   setTheme]   = useState<"light" | "dark">("light");
+  const [theme,   setTheme]   = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const attr = document.documentElement.getAttribute("data-theme");
-    setTheme(attr === "dark" ? "dark" : "light");
+    const saved = localStorage.getItem("elio:theme");
+    const resolved = saved === "light" ? "light" : "dark";
+    setTheme(resolved);
+    document.documentElement.setAttribute("data-theme", resolved === "dark" ? "dark" : "");
     setMounted(true);
   }, []);
 

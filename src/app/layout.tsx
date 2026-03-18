@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Prevent flash of wrong theme — runs before CSS paints */}
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('elio:theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}` }} />
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('elio:theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}` }} />
       </head>
       <body>
         <Providers>
