@@ -787,6 +787,92 @@ export const SEED_GAME_PLANS: Record<string, { keyNotes: string; items: { id: st
   },
 };
 
+// ── Meeting types + seed data ────────────────────────────────
+export type Meeting = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  counselorId: string;
+  counselorName: string;
+  date: string;       // YYYY-MM-DD
+  time: string;       // HH:MM (24h)
+  meetingLink: string;
+};
+
+export type CounselorNote = {
+  meetingId: string;
+  studentId: string;
+  keyNotes: string;           // synced with game plan keyNotes
+  strength: string;
+  areaForImprovement: string;
+  detailedPlan: string;
+  report: string;
+  updatedAt: string;
+};
+
+export const SEED_MEETINGS: Meeting[] = [
+  {
+    id: "meet-duydung-1",
+    studentId: "c-duydung",
+    studentName: "Duy Dũng",
+    counselorId: "staff-duc",
+    counselorName: "Đức",
+    date: "2026-03-20",
+    time: "10:00",
+    meetingLink: "https://meet.google.com/abc-defg-hij",
+  },
+  {
+    id: "meet-ducminh-1",
+    studentId: "c-ducminh",
+    studentName: "Đức Minh",
+    counselorId: "staff-duc",
+    counselorName: "Đức",
+    date: "2026-03-21",
+    time: "14:00",
+    meetingLink: "https://meet.google.com/bcd-efgh-ijk",
+  },
+  {
+    id: "meet-haanh-1",
+    studentId: "c-haanh",
+    studentName: "Hà Anh",
+    counselorId: "staff-duc",
+    counselorName: "Đức",
+    date: "2026-03-22",
+    time: "09:00",
+    meetingLink: "https://zoom.us/j/123456789",
+  },
+  {
+    id: "meet-danhtao-1",
+    studentId: "c-danhtao",
+    studentName: "Danh Tạo",
+    counselorId: "staff-duc",
+    counselorName: "Đức",
+    date: "2026-03-25",
+    time: "15:30",
+    meetingLink: "https://meet.google.com/cde-fghi-jkl",
+  },
+  {
+    id: "meet-triet-1",
+    studentId: "c-triet",
+    studentName: "Chiết",
+    counselorId: "staff-duc",
+    counselorName: "Đức",
+    date: "2026-03-26",
+    time: "11:00",
+    meetingLink: "https://meet.google.com/def-ghij-klm",
+  },
+  {
+    id: "meet-nhatminh-1",
+    studentId: "c-nhatminh",
+    studentName: "Nhật Minh",
+    counselorId: "staff-duc",
+    counselorName: "Đức",
+    date: "2026-04-02",
+    time: "14:00",
+    meetingLink: "https://zoom.us/j/456789123",
+  },
+];
+
 // ── Search ──────────────────────────────────────────────────
 export const MOCK_SEARCH_POOL = STUDENT_ROSTER.map((s) => ({
   id: s.id,

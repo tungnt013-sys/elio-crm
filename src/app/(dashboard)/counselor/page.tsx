@@ -3,10 +3,11 @@
 import { useState, useEffect, Fragment } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { STUDENT_ROSTER, SEED_GAME_PLANS, type StudentDetail } from "@/lib/mock-data";
+import { STUDENT_ROSTER, SEED_GAME_PLANS, SEED_MEETINGS, type StudentDetail, type Meeting, type CounselorNote } from "@/lib/mock-data";
 import { ALL_LEADS, type LeadOverrides } from "@/lib/all-leads";
 import { LeadDetailSlideover } from "@/components/lead-detail-slideover";
 import { GamePlanModal, normalizeByWho, type GamePlan, type GamePlanItem } from "./_components/game-plan-modal";
+import { CounselorNoteModal } from "./_components/counselor-note-modal";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -221,6 +222,17 @@ export default function CounselorPage() {
   const [showDone, setShowDone] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
+  // ── Meeting notes state ──
+  const [meetingNotes, setMeetingNotes] = useState<Record<string, CounselorNote>>({});
+  const [noteModal, setNoteModal] = useState<{ meeting: Meeting; student: StudentDetail } | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("elio:meetingNotes") ?? "{}");
+      if (Object.keys(saved).length > 0) setMeetingNotes(saved);
+    } catch {}
+  }, []);
+
   const handleLeadUpdate = (id: string, updates: Partial<LeadOverrides>) => {
     setLeadOverrides((prev) => ({ ...prev, [id]: { ...prev[id], ...updates } }));
   };
@@ -307,6 +319,27 @@ export default function CounselorPage() {
 
   const s6Count = ALL_LEADS.filter((l) => l.status.startsWith("S6")).length;
 
+  // Upcoming meetings (today + future, sorted by date/time)
+  const upcomingMeetings = SEED_MEETINGS
+    .filter((m) => m.date >= today)
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  const handleSaveNote = (note: CounselorNote, updatedKeyNotes: string) => {
+    // Persist note
+    const next = { ...meetingNotes, [note.meetingId]: note };
+    setMeetingNotes(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("elio:meetingNotes", JSON.stringify(next));
+    }
+    // Sync Key Notes back to game plan
+    setGamePlans((prev) => {
+      const plan = prev[note.studentId];
+      if (!plan) return prev;
+      return { ...prev, [note.studentId]: { ...plan, keyNotes: updatedKeyNotes } };
+    });
+    setNoteModal(null);
+  };
+
   return (
     <section style={{ display: "grid", gap: 20 }}>
       {/* ── Header + Tabs ─────────────────────────────────────────────── */}
@@ -351,6 +384,143 @@ export default function CounselorPage() {
       )}
 
       {activeTab === "students" && (<>
+
+      {/* ── Section 0: Upcoming Meetings ──────────────────────────────── */}
+      <div className="panel-flush">
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
+          <span className="section-title">Upcoming Meetings</span>
+          <span style={{ fontSize: 11, color: "var(--ink-3)" }}>
+            {upcomingMeetings.length} scheduled
+          </span>
+        </div>
+        {upcomingMeetings.length > 0 ? (
+          <div style={{ display: "grid", gap: 0 }}>
+            {upcomingMeetings.map((meeting) => {
+              const [ymd] = meeting.date.split("T");
+              const meetingDT = new Date(`${ymd}T${meeting.time}:00`);
+              const dayNum = meetingDT.getDate();
+              const monthStr = meetingDT.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+              const timeFmt = meetingDT.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+              const meetingStudent = STUDENT_ROSTER.find((s) => s.id === meeting.studentId);
+              const existingNote = meetingNotes[meeting.id];
+              const hasNote = !!existingNote && !!(existingNote.keyNotes || existingNote.strength || existingNote.detailedPlan);
+
+              return (
+                <div
+                  key={meeting.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: "12px 16px",
+                    borderBottom: "1px solid var(--line)",
+                  }}
+                >
+                  {/* Date badge */}
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      width: 46,
+                      textAlign: "center",
+                      background: "var(--accent-soft)",
+                      borderRadius: 8,
+                      padding: "5px 0 6px",
+                    }}
+                  >
+                    <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.09em", color: "var(--accent)", textTransform: "uppercase", lineHeight: 1 }}>
+                      {monthStr}
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: "var(--accent)", lineHeight: 1.1 }}>
+                      {dayNum}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>
+                        {meeting.studentName}
+                      </span>
+                      {meetingStudent && (
+                        <span className={`badge ${BADGE_CLASS[meetingStudent.group]}`}>
+                          {meetingStudent.level}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{timeFmt}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: "2px 8px",
+                          borderRadius: 99,
+                          background: "var(--bg-2)",
+                          color: "var(--ink-2)",
+                        }}
+                      >
+                        {meeting.counselorName}
+                      </span>
+                      <a
+                        href={meeting.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 11, color: "var(--accent)", textDecoration: "none" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                      >
+                        Join ↗
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Note button */}
+                  <button
+                    onClick={() =>
+                      meetingStudent && setNoteModal({ meeting, student: meetingStudent })
+                    }
+                    style={{
+                      flexShrink: 0,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: "6px 14px",
+                      borderRadius: 7,
+                      background: hasNote ? "var(--success-bg)" : "var(--bg-2)",
+                      color: hasNote ? "var(--success)" : "var(--ink-2)",
+                      border: `1.5px solid ${hasNote ? "transparent" : "var(--line)"}`,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      transition: "background 120ms, color 120ms, border-color 120ms",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "var(--accent-soft)";
+                      e.currentTarget.style.color = "var(--accent)";
+                      e.currentTarget.style.borderColor = "transparent";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = hasNote ? "var(--success-bg)" : "var(--bg-2)";
+                      e.currentTarget.style.color = hasNote ? "var(--success)" : "var(--ink-2)";
+                      e.currentTarget.style.borderColor = hasNote ? "transparent" : "var(--line)";
+                    }}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                      <rect x="1.5" y="1.5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M3.5 4h4M3.5 6.5h2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+                    </svg>
+                    {hasNote ? "Note ✓" : "Note"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="empty-state" style={{ padding: 24, fontSize: 13 }}>
+            No upcoming meetings scheduled.
+          </div>
+        )}
+      </div>
 
       {/* ── Section 1: Next Items ─────────────────────────────────────── */}
       <div className="panel-flush">
@@ -617,6 +787,18 @@ export default function CounselorPage() {
           onSave={(plan) => saveGamePlan(modalStudent.id, plan)}
           onMarkDone={() => markStudentDone(modalStudent.id)}
           onClose={() => setModalStudentId(null)}
+        />
+      )}
+
+      {/* ── Counselor Note Modal ──────────────────────────────────────── */}
+      {noteModal && (
+        <CounselorNoteModal
+          student={noteModal.student}
+          meeting={noteModal.meeting}
+          initialKeyNotes={gamePlans[noteModal.meeting.studentId]?.keyNotes}
+          initialNote={meetingNotes[noteModal.meeting.id]}
+          onSave={handleSaveNote}
+          onClose={() => setNoteModal(null)}
         />
       )}
     </section>
