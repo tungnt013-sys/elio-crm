@@ -802,10 +802,21 @@ export type Meeting = {
 export type CounselorNote = {
   meetingId: string;
   studentId: string;
+  // Profile
+  birthYear: string;
+  school: string;
+  intendedMajor: string;
+  targetSchools: string;
+  servicePeriod: string;
+  // Assessment
   keyNotes: string;           // synced with game plan keyNotes
   strength: string;
   areaForImprovement: string;
-  detailedPlan: string;
+  // Proposal content
+  academicPlan: string;
+  keyActivities: string;
+  profileStrategy: string;
+  // Meta
   report: string;
   updatedAt: string;
 };

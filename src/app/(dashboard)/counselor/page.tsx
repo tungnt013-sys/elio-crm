@@ -337,7 +337,7 @@ export default function CounselorPage() {
       if (!plan) return prev;
       return { ...prev, [note.studentId]: { ...plan, keyNotes: updatedKeyNotes } };
     });
-    setNoteModal(null);
+    // Do NOT close modal — closing is handled by onClose (X button / Cancel)
   };
 
   return (
@@ -379,13 +379,8 @@ export default function CounselorPage() {
           </div>
       </div>
 
-      {activeTab === "prospecting" && (
-        <ProspectingTab submitterName={userName} />
-      )}
-
-      {activeTab === "students" && (<>
-
-      {/* ── Section 0: Upcoming Meetings ──────────────────────────────── */}
+      {activeTab === "prospecting" && (<>
+        {/* ── Section 0: Upcoming Meetings ──────────────────────────────── */}
       <div className="panel-flush">
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
           <span className="section-title">Upcoming Meetings</span>
@@ -403,7 +398,7 @@ export default function CounselorPage() {
               const timeFmt = meetingDT.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
               const meetingStudent = STUDENT_ROSTER.find((s) => s.id === meeting.studentId);
               const existingNote = meetingNotes[meeting.id];
-              const hasNote = !!existingNote && !!(existingNote.keyNotes || existingNote.strength || existingNote.detailedPlan);
+              const hasNote = !!existingNote && !!(existingNote.keyNotes || existingNote.strength || existingNote.areaForImprovement);
 
               return (
                 <div
@@ -521,6 +516,11 @@ export default function CounselorPage() {
           </div>
         )}
       </div>
+
+        <ProspectingTab submitterName={userName} />
+      </>)}
+
+      {activeTab === "students" && (<>
 
       {/* ── Section 1: Next Items ─────────────────────────────────────── */}
       <div className="panel-flush">

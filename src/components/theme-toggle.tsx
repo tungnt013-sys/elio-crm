@@ -12,7 +12,7 @@ const ICON   = 15;            // icon render size (smaller → breathing room)
 const INSET  = (THUMB - ICON) / 2;  // 3.5 px centering offset
 
 // ── Colours ──────────────────────────────────────────────────
-const LIGHT_BG = "#7BA4F7";   // soft periwinkle
+const LIGHT_BG = "#173F36";   // deep forest green
 const DARK_BG  = "#2F2F3D";   // neutral charcoal, whisper of blue
 
 // 5-pointed star with curved tips (quadratic bezier through outer points)
@@ -82,33 +82,6 @@ export function ThemeToggle() {
       }}
     >
 
-      {/* ═══ LIGHT: 2 white dots — right side ═══════════════════ */}
-      {/* Large dot — upper right */}
-      <div style={{
-        position:      "absolute",
-        width:         6,
-        height:        6,
-        borderRadius:  "50%",
-        background:    "white",
-        top:           6,
-        right:         9,
-        opacity:       isDark ? 0 : 1,
-        transition:    "opacity 0.3s ease",
-        pointerEvents: "none",
-      }} />
-      {/* Small dot — lower, slightly left */}
-      <div style={{
-        position:      "absolute",
-        width:         4,
-        height:        4,
-        borderRadius:  "50%",
-        background:    "white",
-        top:           17,
-        right:         12,
-        opacity:       isDark ? 0 : 1,
-        transition:    "opacity 0.3s ease 0.04s",
-        pointerEvents: "none",
-      }} />
 
       {/* ═══ DARK: 3 stars + 2 dots — left side (night sky) ════ */}
       {/* Large 5-pt star — upper left */}
@@ -188,19 +161,19 @@ export function ThemeToggle() {
         >
           <path
             d="M40.5716 15.8138C40.5716 15.8138 36.5715 0.885179 22.3897 5.06613C8.56533 9.14173 12.0176 23.4648 12.0176 23.4648"
-            stroke="white" strokeWidth="3.5" strokeLinecap="round"
+            stroke="#EBF4DF" strokeWidth="3.5" strokeLinecap="round"
           />
           <path
             d="M27.1696 40.2327C27.1696 40.2327 42.0982 36.2326 37.9173 22.0509C33.8417 8.22646 19.5186 11.6787 19.5186 11.6787"
-            stroke="white" strokeWidth="3.5" strokeLinecap="round"
+            stroke="#EBF4DF" strokeWidth="3.5" strokeLinecap="round"
           />
           <path
             d="M2.63349 26.36C2.63349 26.36 6.63361 41.2886 20.8154 37.1077C34.6397 33.0321 31.1875 18.709 31.1875 18.709"
-            stroke="white" strokeWidth="3.5" strokeLinecap="round"
+            stroke="#EBF4DF" strokeWidth="3.5" strokeLinecap="round"
           />
           <path
             d="M16.3919 2.35712C16.3919 2.35712 1.4633 6.35724 5.64426 20.539C9.71986 34.3634 24.043 30.9111 24.043 30.9111"
-            stroke="white" strokeWidth="3.5" strokeLinecap="round"
+            stroke="#EBF4DF" strokeWidth="3.5" strokeLinecap="round"
           />
         </svg>
 
