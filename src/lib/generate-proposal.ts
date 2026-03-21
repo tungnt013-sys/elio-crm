@@ -20,6 +20,8 @@ import {
   TabStopType,
   TabStopPosition,
   LevelFormat,
+  HeightRule,
+  VerticalAlign,
   convertInchesToTwip,
 } from "docx";
 import { saveAs } from "file-saver";
@@ -293,17 +295,173 @@ function sectionToDocx(s: ProposalSection): (Paragraph | Table)[] {
 // ── Download ──────────────────────────────────────────────────────────────────
 
 export async function downloadProposalDocx(sections: ProposalSection[], studentName: string): Promise<void> {
-  const children: (Paragraph | Table)[] = [];
-  for (const s of sections) children.push(...sectionToDocx(s));
+  // ── Split sections into cover (before first page-break) and body (after) ──
+  const firstBreakIdx = sections.findIndex(s => s.type === "page-break");
+  const coverSections = firstBreakIdx >= 0 ? sections.slice(0, firstBreakIdx) : [];
+  const bodySections = firstBreakIdx >= 0 ? sections.slice(firstBreakIdx + 1) : sections;
 
+  // ── Build body content ──
+  const bodyChildren: (Paragraph | Table)[] = [];
+  for (const s of bodySections) bodyChildren.push(...sectionToDocx(s));
+
+  // ── Fetch logo images ──
   let logoBuffer: ArrayBuffer | null = null;
   let iconBuffer: ArrayBuffer | null = null;
   try {
-    const [lr, ir] = await Promise.all([fetch("/elio-logo.png"), fetch("/elio-icon.png")]);
+    const [lr, ir] = await Promise.all([
+      fetch("/elio-logo.png"),
+      fetch("/elio-icon.png"),
+    ]);
     if (lr.ok) logoBuffer = await lr.arrayBuffer();
     if (ir.ok) iconBuffer = await ir.arrayBuffer();
   } catch { /* graceful fallback */ }
 
+  // ── Cover page: full-page green table ──
+  const CREAM = "E8E0D0";
+  const pageW = 12240; // letter width in twip
+  const coverW = pageW; // full width (margins handled by section)
+  const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+  const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideHorizontal: noBorder, insideVertical: noBorder };
+
+  // Extract cover info from sections (match preview: only student name + birth year)
+  const subtitleSec = coverSections.find(s => s.type === "subtitle");
+  const infoSections = coverSections.filter(s => s.type === "info");
+  const extractInfo = (prefix: string) => {
+    const sec = infoSections.find(s => s.content.startsWith(prefix));
+    return sec ? sec.content.split(":").slice(1).join(":").trim() : "";
+  };
+  const coverStudentName = extractInfo("Học sinh");
+  const coverBirthYear = extractInfo("Năm sinh");
+
+  const coverTable = new Table({
+    width: { size: coverW, type: WidthType.DXA },
+    columnWidths: [coverW],
+    borders: noBorders,
+    rows: [
+      // Row 1 — Logo + tagline (1600 twips)
+      new TableRow({
+        height: { value: 1600, rule: HeightRule.EXACT },
+        children: [new TableCell({
+          width: { size: coverW, type: WidthType.DXA },
+          shading: { fill: BRAND, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 400, bottom: 200, left: 500, right: 500 },
+          borders: noBorders,
+          children: [
+            new Paragraph({
+              spacing: { before: 0, after: 80 },
+              children: [tx("elio education", { bold: true, size: 28, color: "FFFFFF" })],
+            }),
+            new Paragraph({
+              spacing: { before: 0, after: 0 },
+              children: [tx("Một điểm đến, mọi bước đồng hành", { italics: true, size: 16, color: CREAM })],
+            }),
+          ],
+        })],
+      }),
+      // Row 2 — Spacer (3000 twips — pushes title down)
+      new TableRow({
+        height: { value: 3000, rule: HeightRule.EXACT },
+        children: [new TableCell({
+          width: { size: coverW, type: WidthType.DXA },
+          shading: { fill: BRAND, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 0, bottom: 0, left: 500, right: 500 },
+          borders: noBorders,
+          children: [new Paragraph({ spacing: { before: 0, after: 0 }, children: [] })],
+        })],
+      }),
+      // Row 3 — Title (4000 twips)
+      new TableRow({
+        height: { value: 4000, rule: HeightRule.EXACT },
+        children: [new TableCell({
+          width: { size: coverW, type: WidthType.DXA },
+          shading: { fill: BRAND, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 0, bottom: 400, left: 500, right: 500 },
+          borders: noBorders,
+          children: [
+            new Paragraph({
+              spacing: { before: 0, after: 200 },
+              children: [tx(subtitleSec?.content ?? "Lộ trình Ứng tuyển Đại học – Cá nhân hóa", { bold: true, size: 56, color: "FFFFFF" })],
+            }),
+          ],
+        })],
+      }),
+      // Row 4 — Divider (300 twips)
+      new TableRow({
+        height: { value: 300, rule: HeightRule.EXACT },
+        children: [new TableCell({
+          width: { size: coverW, type: WidthType.DXA },
+          shading: { fill: BRAND, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 0, bottom: 0, left: 500, right: 500 },
+          borders: noBorders,
+          children: [new Paragraph({
+            spacing: { before: 0, after: 0 },
+            border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: CREAM, space: 1 } },
+            children: [],
+          })],
+        })],
+      }),
+      // Row 5 — Student info (2940 twips)
+      new TableRow({
+        height: { value: 2940, rule: HeightRule.EXACT },
+        children: [new TableCell({
+          width: { size: coverW, type: WidthType.DXA },
+          shading: { fill: BRAND, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 200, bottom: 400, left: 500, right: 500 },
+          borders: noBorders,
+          children: [
+            new Paragraph({
+              spacing: { before: 0, after: 40 },
+              tabStops: [{ type: TabStopType.LEFT, position: Math.round(coverW / 2) }],
+              children: [
+                tx("STUDENT", { bold: true, size: 15, color: CREAM }),
+                new TextRun({ children: ["\t"] }),
+                tx("YEAR OF BIRTH", { bold: true, size: 15, color: CREAM }),
+              ],
+            }),
+            new Paragraph({
+              spacing: { before: 0, after: 0 },
+              tabStops: [{ type: TabStopType.LEFT, position: Math.round(coverW / 2) }],
+              children: [
+                tx(coverStudentName || studentName, { size: 24, color: "FFFFFF" }),
+                new TextRun({ children: ["\t"] }),
+                tx(coverBirthYear, { size: 24, color: "FFFFFF" }),
+              ],
+            }),
+          ],
+        })],
+      }),
+      // Row 6 — Contact footer (4000 twips, content pushed to bottom)
+      new TableRow({
+        height: { value: 4000, rule: HeightRule.EXACT },
+        children: [new TableCell({
+          width: { size: coverW, type: WidthType.DXA },
+          shading: { fill: BRAND, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 200, bottom: 400, left: 500, right: 500 },
+          borders: noBorders,
+          verticalAlign: VerticalAlign.BOTTOM,
+          children: [
+            new Paragraph({
+              spacing: { before: 80, after: 0 },
+              border: { top: { style: BorderStyle.SINGLE, size: 1, color: CREAM, space: 6 } },
+              tabStops: [
+                { type: TabStopType.CENTER, position: Math.round(coverW / 2) },
+                { type: TabStopType.RIGHT, position: coverW - 1000 },
+              ],
+              children: [
+                tx("Hà Nội, Việt Nam", { size: 16, color: CREAM }),
+                new TextRun({ children: ["\t"] }),
+                tx("info@elio.education", { size: 16, color: CREAM }),
+                new TextRun({ children: ["\t"] }),
+                tx("(+84) 33 929 9925", { size: 16, color: CREAM }),
+              ],
+            }),
+          ],
+        })],
+      }),
+    ],
+  });
+
+  // ── Header / Footer for body pages ──
   const headerPara = new Paragraph({
     tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
     spacing: { before: 0, after: 0 },
@@ -325,20 +483,35 @@ export async function downloadProposalDocx(sections: ProposalSection[], studentN
     ],
   });
 
+  const pageProps = {
+    page: {
+      size: { width: 12240, height: 15840 },
+      margin: { top: 2259, bottom: 1440, left: 1440, right: 1440, header: 1008, footer: 720 },
+    },
+  };
+
   const doc = new Document({
     numbering: { config: [{ reference: "bullet-list", levels: [{ level: 0, format: LevelFormat.BULLET, text: "\u2022", alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: convertInchesToTwip(0.35), hanging: convertInchesToTwip(0.2) } } } }] }] },
     styles: { default: { document: { run: { font: FONT, size: 22, color: INK } } } },
-    sections: [{
-      properties: {
-        page: {
-          size: { width: 12240, height: 15840 },
-          margin: { top: 2259, bottom: 1440, left: 1440, right: 1440, header: 1008, footer: 720 },
+    sections: [
+      // Cover page section — no header/footer, minimal margins
+      {
+        properties: {
+          page: {
+            size: { width: 12240, height: 15840 },
+            margin: { top: 0, bottom: 0, left: 0, right: 0, header: 0, footer: 0 },
+          },
         },
+        children: [coverTable],
       },
-      headers: { default: new Header({ children: [headerPara] }) },
-      footers: { default: new Footer({ children: [footerPara] }) },
-      children,
-    }],
+      // Body section — with header/footer
+      {
+        properties: pageProps,
+        headers: { default: new Header({ children: [headerPara] }) },
+        footers: { default: new Footer({ children: [footerPara] }) },
+        children: bodyChildren,
+      },
+    ],
   });
 
   const blob = await Packer.toBlob(doc);
