@@ -182,6 +182,17 @@ function txLines(text: string, opts?: Parameters<typeof tx>[1]): TextRun[] {
   );
 }
 
+/** Parse inline **bold** markers into TextRun[] */
+function parseInlineDocx(text: string, opts?: { size?: number; color?: string }): TextRun[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.filter(Boolean).map(part => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return tx(part.slice(2, -2), { bold: true, size: opts?.size, color: opts?.color });
+    }
+    return tx(part, { size: opts?.size, color: opts?.color });
+  });
+}
+
 function sectionToDocx(s: ProposalSection): (Paragraph | Table)[] {
   switch (s.type) {
 
@@ -202,8 +213,37 @@ function sectionToDocx(s: ProposalSection): (Paragraph | Table)[] {
       return [para({ spaceBefore: 440, spaceAfter: 200, borderBottom: true, children: [tx(s.content, { bold: true, size: 32, color: BRAND })] })];
 
     case "body":
-    case "closing":
-      return [para({ spaceAfter: 160, lineRule: 302, children: txLines(s.content, { size: 22 }) })];
+    case "closing": {
+      const paragraphs: Paragraph[] = [];
+      const lines = s.content.split("\n");
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          paragraphs.push(new Paragraph({ spacing: { before: 0, after: 80 }, children: [] }));
+          continue;
+        }
+        // Numbered sub-heading (e.g. "1. Điểm mạnh")
+        const numHeading = trimmed.match(/^(\d+)\.\s+(.+)/);
+        if (numHeading && trimmed.length < 80 && !trimmed.includes("•")) {
+          paragraphs.push(para({ spaceBefore: 200, spaceAfter: 80, children: [tx(trimmed, { bold: true, size: 24, color: BRAND })] }));
+          continue;
+        }
+        // Sub-sub heading (e.g. "Học thuật & Chuẩn hóa:")
+        if (trimmed.endsWith(":") && trimmed.length < 60 && !trimmed.startsWith("•")) {
+          paragraphs.push(para({ spaceBefore: 120, spaceAfter: 40, children: [tx(trimmed, { bold: true, size: 22, color: INK })] }));
+          continue;
+        }
+        // Bullet point
+        if (trimmed.startsWith("• ") || trimmed.startsWith("- ")) {
+          const bulletText = trimmed.slice(2);
+          paragraphs.push(para({ spaceBefore: 20, spaceAfter: 20, lineRule: 302, children: parseInlineDocx(bulletText, { size: 22 }), bulletRef: "bullet-list" }));
+          continue;
+        }
+        // Regular paragraph with inline bold
+        paragraphs.push(para({ spaceAfter: 100, lineRule: 302, children: parseInlineDocx(trimmed, { size: 22 }) }));
+      }
+      return paragraphs;
+    }
 
     case "divider":
       return [new Paragraph({ spacing: { before: 160, after: 160 }, border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: RULE, space: 1 } }, children: [] })];
