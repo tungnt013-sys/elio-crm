@@ -94,12 +94,12 @@ function parseSections(text: string, filename: string): ParsedSection[] {
   if (s2aStart !== -1) {
     const s2aEnd = s2bStart !== -1 && s2bStart > s2aStart ? s2bStart : lines.length;
     const s2a = lines.slice(s2aStart, s2aEnd).join("\n").trim();
-    if (s2a.length > 100) sections.push({ sectionType: "section2a", content: s2a });
+    if (s2a.length > 100) sections.push({ sectionType: "section2", content: s2a });
   }
 
   if (s2bStart !== -1) {
     const s2b = lines.slice(s2bStart).join("\n").trim();
-    if (s2b.length > 100) sections.push({ sectionType: "section2b", content: s2b });
+    if (s2b.length > 100) sections.push({ sectionType: "section3", content: s2b });
   }
 
   return sections;

@@ -8,6 +8,7 @@ const DEV_USERS = [
   { email: "tung@elio.education",    name: "Tùng",   role: "ADMIN" as UserRole },
   { email: "duc@elio.education",     name: "Đức",    role: "ADMIN" as UserRole },
   { email: "phuong@elio.education",  name: "Phương", role: "ADMIN" as UserRole },
+  { email: "counselor@elio.education", name: "Counselor", role: "COUNSELOR" as UserRole },
   { email: "hang.nm@elio.education", name: "Hằng",   role: "SALES" as UserRole },
   { email: "chi.tm@elio.education",  name: "Chi",    role: "SALES_VIEW" as UserRole },
 ];

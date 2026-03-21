@@ -20,7 +20,7 @@ function mockAIContent(section: AISection, student: StudentDetail, currentKeyNot
     case "keyNotes": {
       const base = info
         ? `${info}`
-        : `${name} đang trong giai đoạn chuẩn bị hành trình vào đại học — một bước ngoặt lớn không chỉ về học thuật, mà còn về cách em nhìn nhận bản thân và tương lai.`;
+        : `${name} đang trong giai đoạn chuẩn bị hành trình vào đại học. Đây là một bước ngoặt lớn không chỉ về học thuật, mà còn về cách em nhìn nhận bản thân và tương lai phía trước.`;
       const extra =
         notes && notes !== info
           ? `\n\nĐiểm cần lưu ý thêm từ các buổi làm việc: ${notes}`
@@ -32,19 +32,19 @@ function mockAIContent(section: AISection, student: StudentDetail, currentKeyNot
       const positives: string[] = [];
       if (/compli|follow.*advi|does whatever/i.test(info))
         positives.push(
-          `${name} có khả năng lắng nghe và tiếp thu rất tốt — điều này không phải ai cũng có. Trong một quá trình dài và nhiều lúc áp lực, tính cách này sẽ giúp em vượt qua những giai đoạn khó hơn nhiều bạn đồng trang lứa`
+          `${name} có khả năng lắng nghe và tiếp thu rất tốt. Điều này không phải ai cũng có. Trong một quá trình dài và nhiều lúc áp lực, tính cách này sẽ giúp em vượt qua những giai đoạn khó hơn nhiều bạn đồng trang lứa`
         );
       if (/GPA|grade|academic|IB|A-level/i.test(info))
         positives.push(
-          "Nền tảng học thuật của em khá vững — đây là điều kiện cần thiết để tự tin nhắm đến những trường có yêu cầu cao"
+          "Nền tảng học thuật của em khá vững. Đây là điều kiện cần thiết để tự tin nhắm đến những trường có yêu cầu cao"
         );
       if (/mentor|intern|research|project|hackathon|competition/i.test(info))
         positives.push(
-          "Em đã bắt đầu tích lũy kinh nghiệm thực tế sớm hơn nhiều bạn đồng trang lứa — đây là lợi thế không nhỏ trong mắt hội đồng tuyển sinh"
+          "Em đã bắt đầu tích lũy kinh nghiệm thực tế sớm hơn nhiều bạn đồng trang lứa. Đây là lợi thế không nhỏ trong mắt hội đồng tuyển sinh"
         );
       if (/self.direct|independent|consistent|proactive/i.test(info))
         positives.push(
-          "Em có tính tự giác và khả năng tự định hướng tốt — phẩm chất mà các trường đại học luôn tìm kiếm ở sinh viên của họ"
+          "Em có tính tự giác và khả năng tự định hướng tốt. Đây là phẩm chất mà các trường đại học luôn tìm kiếm ở sinh viên của họ"
         );
       if (positives.length === 0)
         positives.push(
@@ -52,7 +52,7 @@ function mockAIContent(section: AISection, student: StudentDetail, currentKeyNot
         );
       if (positives.length < 2)
         positives.push(
-          `Gia đình và ${name} phối hợp tốt với đội ngũ Elio — điều này tạo ra nền tảng tin tưởng để cùng nhau đi xa hơn`
+          `Gia đình và ${name} phối hợp tốt với đội ngũ Elio. Điều này tạo ra nền tảng tin tưởng để cùng nhau đi xa hơn`
         );
 
       return `Những điều mình trân trọng ở ${name} (${school}):\n\n${positives.map((p) => `• ${p}`).join("\n")}`;
@@ -63,22 +63,22 @@ function mockAIContent(section: AISection, student: StudentDetail, currentKeyNot
       if (issues.length > 0) issues.forEach((issue) => areas.push(issue));
       if (/unresponsive|slow|deadline|delay/i.test(info))
         areas.push(
-          `Tốc độ phản hồi và chủ động cập nhật tiến độ — khi em tự mình nhìn thấy được roadmap phía trước, việc duy trì momentum sẽ trở nên tự nhiên hơn nhiều`
+          `Tốc độ phản hồi và chủ động cập nhật tiến độ. Khi em tự mình nhìn thấy được roadmap phía trước, việc duy trì momentum sẽ trở nên tự nhiên hơn nhiều`
         );
       if (/narrative|story|essay|why/i.test(notes + info) && areas.length < 3)
         areas.push(
-          `Câu chuyện cá nhân trong bài luận — em chưa cần phải có câu trả lời ngay, nhưng cần bắt đầu tự hỏi: "Điều gì trong cuộc sống của mình thực sự có ý nghĩa với mình?"`
+          `Câu chuyện cá nhân trong bài luận. Em chưa cần phải có câu trả lời ngay, nhưng cần bắt đầu tự hỏi: "Điều gì trong cuộc sống của mình thực sự có ý nghĩa với mình?"`
         );
       if (/speaking|IELTS|english|communication/i.test(notes + info))
         areas.push(
-          `Tiếng Anh giao tiếp, đặc biệt Speaking — đây không chỉ là điểm thi, mà là kỹ năng em sẽ cần mỗi ngày khi học ở môi trường quốc tế`
+          `Tiếng Anh giao tiếp, đặc biệt Speaking. Đây không chỉ là điểm thi, mà là kỹ năng em sẽ cần mỗi ngày khi học ở môi trường quốc tế`
         );
       if (areas.length === 0) {
         areas.push(
-          `Quản lý thời gian và chủ động với deadline — không phải vì em chậm, mà vì giai đoạn nộp hồ sơ sẽ đòi hỏi rất nhiều năng lượng cùng lúc`
+          `Quản lý thời gian và chủ động với deadline. Không phải vì em chậm, mà vì giai đoạn nộp hồ sơ sẽ đòi hỏi rất nhiều năng lượng cùng lúc`
         );
         areas.push(
-          `Câu hỏi "Why this school" — nghiên cứu sâu về từng trường để viết những lý do thực sự thuyết phục, không phải những gì ai cũng viết`
+          `Câu hỏi "Why this school". Nghiên cứu sâu về từng trường để viết những lý do thực sự thuyết phục, không phải những gì ai cũng viết`
         );
       }
 
@@ -92,49 +92,49 @@ function mockAIContent(section: AISection, student: StudentDetail, currentKeyNot
       const currentSAT = satMatch ? satMatch[1] : null;
 
       const ieltsLine = currentIELTS
-        ? `• IELTS ${currentIELTS} — đang trên đúng hướng, mục tiêu ≥ 7.5. Nếu Speaking còn thấp hơn các band khác, đây là nơi cần tập trung trước.`
-        : "• IELTS: chưa có điểm gốc — nên thi thử sớm để biết mình đang ở đâu, từ đó lên lịch ôn thực tế hơn. Mục tiêu: ≥ 7.5.";
+        ? `• IELTS ${currentIELTS}, đang trên đúng hướng, mục tiêu 7.5 trở lên. Nếu Speaking còn thấp hơn các band khác, đây là nơi cần tập trung trước.`
+        : "• IELTS: chưa có điểm gốc. Nên thi thử sớm để biết mình đang ở đâu, từ đó lên lịch ôn thực tế hơn. Mục tiêu: 7.5 trở lên.";
       const satLine = currentSAT
-        ? `• SAT ${currentSAT} — tiếp tục ôn đều, mục tiêu ≥ 1500. Ưu tiên Math và Evidence-Based Reading.`
-        : "• SAT: chưa có điểm — đặt lịch thi lần đầu trong học kỳ tới. Mục tiêu: ≥ 1500.";
+        ? `• SAT ${currentSAT}, tiếp tục ôn đều, mục tiêu 1500 trở lên. Ưu tiên Math và Evidence-Based Reading.`
+        : "• SAT: chưa có điểm. Đặt lịch thi lần đầu trong học kỳ tới. Mục tiêu: 1500 trở lên.";
 
-      return `Kế hoạch học thuật — ${name} (${school}):\n\nMình muốn cùng ${name} xây dựng một kế hoạch ôn luyện thực tế, không quá tải nhưng đủ để tiến bộ đều đặn:\n\n${ieltsLine}\n${satLine}\n• GPA: duy trì ổn định, đặc biệt ở những môn liên quan đến ngành em dự định theo đuổi — đây là tín hiệu rõ ràng nhất về academic fit với trường.\n\nGhi chú: Mình sẽ giới thiệu đối tác ôn luyện nếu ${name} cần hỗ trợ thêm ngoài giờ làm việc với Elio.`;
+      return `Kế hoạch học thuật cho ${name} (${school}):\n\nMình muốn cùng ${name} xây dựng một kế hoạch ôn luyện thực tế, không quá tải nhưng đủ để tiến bộ đều đặn:\n\n${ieltsLine}\n${satLine}\n• GPA: duy trì ổn định, đặc biệt ở những môn liên quan đến ngành em dự định theo đuổi. Đây là tín hiệu rõ ràng nhất về academic fit với trường.\n\nGhi chú: Mình sẽ giới thiệu đối tác ôn luyện nếu ${name} cần hỗ trợ thêm ngoài giờ làm việc với Elio.`;
     }
 
     case "keyActivities": {
       const activities: string[] = [];
       if (/hackathon/i.test(info))
         activities.push(
-          `Phát triển hackathon project thành sản phẩm có câu chuyện rõ ràng — cách tốt nhất để cho hội đồng tuyển sinh thấy ${name} không chỉ có ý tưởng mà còn biết biến ý tưởng thành hiện thực`
+          `Phát triển hackathon project thành sản phẩm có câu chuyện rõ ràng. Đây là cách tốt nhất để cho hội đồng tuyển sinh thấy ${name} không chỉ có ý tưởng mà còn biết biến ý tưởng thành hiện thực`
         );
       if (/intern/i.test(info))
         activities.push(
-          "Hoàn thiện internship và ghi lại những gì em học được — không phải resume line, mà là chất liệu thực để viết bài luận"
+          "Hoàn thiện internship và ghi lại những gì em học được. Không phải resume line, mà là chất liệu thực để viết bài luận"
         );
       if (/research/i.test(info))
         activities.push(
-          "Tham gia Research 101 của Elio — cơ hội để em nghiên cứu đúng nghĩa và publish trên SPARK Academic Journal"
+          "Tham gia Research 101 của Elio. Đây là cơ hội để em nghiên cứu đúng nghĩa và publish trên SPARK Academic Journal"
         );
       if (/mentor/i.test(info))
         activities.push(
-          "Tận dụng mạng lưới mentor hiện tại — không chỉ để hỏi về ngành nghề, mà để hiểu mình có thực sự phù hợp với con đường đó không"
+          "Tận dụng mạng lưới mentor hiện tại. Không chỉ để hỏi về ngành nghề, mà để hiểu mình có thực sự phù hợp với con đường đó không"
         );
       if (activities.length === 0) {
         activities.push(
-          `Tham gia Research 101 của Elio — đây là cách tốt nhất để ${name} xây dựng credibility học thuật theo chiều sâu, không chỉ chiều rộng`
+          `Tham gia Research 101 của Elio. Đây là cách tốt nhất để ${name} xây dựng credibility học thuật theo chiều sâu, không chỉ chiều rộng`
         );
         activities.push(
-          "Chọn 1 dự án cá nhân gắn với điều em thực sự quan tâm — không phải để ghi vào hồ sơ, mà để hiểu bản thân mình hơn"
+          "Chọn 1 dự án cá nhân gắn với điều em thực sự quan tâm. Không phải để ghi vào hồ sơ, mà để hiểu bản thân mình hơn"
         );
         activities.push(
-          "Tìm 1 cơ hội internship hoặc shadowing liên quan đến ngành — dù ngắn, dù nhỏ, cũng đủ để tạo góc nhìn thực tế"
+          "Tìm 1 cơ hội internship hoặc shadowing liên quan đến ngành. Dù ngắn, dù nhỏ, cũng đủ để tạo góc nhìn thực tế"
         );
       }
       activities.push(
-        "Duy trì ít nhất 1 hoạt động em làm liên tục qua nhiều năm — sự kiên định bao giờ cũng thuyết phục hơn danh sách dài mà thiếu chiều sâu"
+        "Duy trì ít nhất 1 hoạt động em làm liên tục qua nhiều năm. Sự kiên định bao giờ cũng thuyết phục hơn danh sách dài mà thiếu chiều sâu"
       );
 
-      return `Hoạt động mình đề xuất cho ${name}:\n\nMình không muốn ${name} chạy theo một checklist ngoại khóa. Mục tiêu thực sự là tìm 2–3 thứ em thực sự đầu tư, và để chúng kể câu chuyện về em một cách tự nhiên.\n\n${activities.map((a) => `• ${a}`).join("\n")}`;
+      return `Hoạt động mình đề xuất cho ${name}:\n\nMình không muốn ${name} chạy theo một checklist ngoại khóa. Mục tiêu thực sự là tìm 2 đến 3 thứ em thực sự đầu tư, và để chúng kể câu chuyện về em một cách tự nhiên.\n\n${activities.map((a) => `• ${a}`).join("\n")}`;
     }
 
     case "profileStrategy": {
@@ -145,7 +145,7 @@ function mockAIContent(section: AISection, student: StudentDetail, currentKeyNot
           ? info.match(/wants? (.+?)[.,]/i)?.[1] ?? ""
           : "";
 
-      return `Chiến lược hồ sơ tổng thể — ${name}:\n\nĐiều mình tin tưởng sau nhiều năm làm việc với học sinh: hồ sơ tốt nhất không phải là hồ sơ "hoàn hảo" theo công thức — mà là hồ sơ trung thực, nhất quán, và thể hiện đúng con người thật của ${name}.\n\nĐịnh hướng trường: ${targetLine || `Sẽ thảo luận cụ thể sau khi hiểu rõ mục tiêu và điều kiện tài chính của gia đình — danh sách tốt là danh sách phù hợp, không phải danh sách "nghe có vẻ uy tín"`}\nNgành dự định: ${majorLine || "Cần làm rõ thêm cùng nhau — đây là quyết định quan trọng, mình không muốn vội"}\n\nCác bước tiếp theo:\n• Brainstorm Common App essay: tìm câu chuyện thật của ${name} — không phải câu chuyện em nghĩ người ta muốn nghe.\n• Xin thư giới thiệu từ người thực sự hiểu em — không nhất thiết phải là thầy/cô dạy môn khó nhất.\n• Xây dựng danh sách 10–15 trường: Reach, Match, và Safety theo đúng nghĩa.\n\nGhi nhớ: Hành trình vào đại học chỉ là khởi đầu. Điều Elio thực sự hướng tới là ${name} bước vào năm nhất với sự tự tin và sự hiểu biết về bản thân — không chỉ với một offer letter.`;
+      return `Chiến lược hồ sơ tổng thể cho ${name}:\n\nĐiều mình tin tưởng sau nhiều năm làm việc với học sinh: hồ sơ tốt nhất không phải là hồ sơ "hoàn hảo" theo công thức. Hồ sơ tốt nhất là hồ sơ trung thực, nhất quán, và thể hiện đúng con người thật của ${name}.\n\nĐịnh hướng trường: ${targetLine || `Sẽ thảo luận cụ thể sau khi hiểu rõ mục tiêu và điều kiện tài chính của gia đình. Danh sách tốt là danh sách phù hợp, không phải danh sách "nghe có vẻ uy tín"`}\nNgành dự định: ${majorLine || "Cần làm rõ thêm cùng nhau. Đây là quyết định quan trọng, mình không muốn vội"}\n\nCác bước tiếp theo:\n• Brainstorm Common App essay: tìm câu chuyện thật của ${name}, không phải câu chuyện em nghĩ người ta muốn nghe.\n• Xin thư giới thiệu từ người thực sự hiểu em. Không nhất thiết phải là thầy cô dạy môn khó nhất.\n• Xây dựng danh sách 10 đến 15 trường: Reach, Match, và Safety theo đúng nghĩa.\n\nHành trình vào đại học chỉ là khởi đầu. Điều Elio thực sự hướng tới là ${name} bước vào năm nhất với sự tự tin và sự hiểu biết về bản thân, không chỉ với một offer letter.`;
     }
   }
 }
@@ -156,52 +156,58 @@ function genSection1(fullName: string, info: string, issues: string[]): string {
   const name = fullName.split(" ").pop() ?? fullName;
   const strengths: string[] = [];
   if (/top 5%|top5%|rank/i.test(info))
-    strengths.push(`Học lực của ${name} nằm trong nhóm dẫn đầu — đây là tín hiệu rõ ràng về năng lực và sự nghiêm túc`);
+    strengths.push(`Học lực của ${name} nằm trong nhóm dẫn đầu. Đây là tín hiệu rõ ràng về năng lực và sự nghiêm túc`);
   if (/olympiad|competition|award|prize/i.test(info))
-    strengths.push("Có thành tích nổi bật trong các kỳ thi học thuật — điểm cộng đáng kể trong mắt hội đồng tuyển sinh");
+    strengths.push("Có thành tích nổi bật trong các kỳ thi học thuật. Điểm cộng đáng kể trong mắt hội đồng tuyển sinh");
   if (/compli|receptive|follow/i.test(info))
-    strengths.push(`${name} lắng nghe và tiếp thu tốt — trong một hành trình dài và nhiều thử thách, đây là phẩm chất thực sự quý giá`);
+    strengths.push(`${name} lắng nghe và tiếp thu tốt. Trong một hành trình dài và nhiều thử thách, đây là phẩm chất thực sự quý giá`);
   if (/GPA|IB|A-level|academic/i.test(info))
     strengths.push("Nền tảng học thuật vững chắc, có khả năng duy trì phong độ ổn định qua nhiều giai đoạn");
   if (strengths.length === 0)
-    strengths.push(`${name} mang đến cho quá trình này sự chân thành và cam kết đáng tin cậy — điều mà không thể dạy được`);
+    strengths.push(`${name} mang đến cho quá trình này sự chân thành và cam kết đáng tin cậy. Điều mà không thể dạy được`);
 
-  let content = `Sau thời gian đồng hành cùng ${name}, Elio nhận thấy những điểm mạnh thực sự của em:\n\n${strengths.map(s => `• ${s}`).join("\n")}\n\n`;
-  if (issues.length > 0) {
-    content += `Đồng thời, để hành trình này đạt kết quả tốt nhất, có một số điểm chúng ta cần cùng nhau tập trung:\n\n${issues.map(i => `• ${i}`).join("\n")}\n\n`;
-  }
-  content += `CHIẾN LƯỢC CỦA ELIO CHO ${fullName.toUpperCase()}:\n\nElio tin rằng con đường vào một trường đại học tốt không chỉ là một quy trình tuyển sinh — đó là hành trình để ${name} khám phá bản thân, xây dựng chính kiến, và chuẩn bị bước ra thế giới với đủ tự tin.\n\nPhương pháp của chúng tôi là xây dựng hồ sơ có chiều sâu và nhất quán: chọn 2–3 hoạt động ${name} thực sự đam mê, đầu tư bài bản, và kết nối tất cả thành một câu chuyện trung thực — câu chuyện mà hội đồng tuyển sinh sẽ nhớ mãi sau khi đọc xong.\n\nMục tiêu cuối cùng: ${name} bước vào đại học với sự tự tin rằng mình được nhận vào vì chính mình — không phải vì một phiên bản được tô vẽ để vừa lòng hội đồng.`;
-  return content;
+  const improvementPoints = issues.length > 0
+    ? issues.map(i => `• ${i}`).join("\n")
+    : `• Quản lý thời gian và chủ động với deadline. Giai đoạn nộp hồ sơ sẽ đòi hỏi rất nhiều năng lượng cùng lúc.\n• Câu hỏi "Why this school". Nghiên cứu sâu về từng trường để viết những lý do thực sự thuyết phục.`;
+
+  return `1. Điểm mạnh\n\nCó những học sinh giỏi vì chăm chỉ. Có những học sinh giỏi vì thông minh. ${name} thuộc về nhóm thứ ba, hiếm hơn: giỏi vì thực sự tò mò. Đó là điều khác biệt mà chúng tôi nhận ra ngay từ những buổi làm việc đầu tiên.\n\n${strengths.map(s => `• ${s}`).join("\n")}\n\n2. Những điểm có thể Phát triển\n\nĐể hành trình này đạt kết quả tốt nhất, có một số điểm chúng ta cần cùng nhau tập trung:\n\n${improvementPoints}\n\n3. Định hướng\n\nChiến lược của Elio cho ${name} được xây dựng trên ba trụ cột:\n\n• Làm rõ câu chuyện ngành học. ${name} đang quan tâm đến nhiều hướng, nhưng cần kết nối bằng một luận điểm thuyết phục: vì sao ${name} muốn đi con đường này, và vì sao bây giờ?\n• Đầu tư chiều sâu, không chiều rộng. Hai đến ba hoạt động có tầm, có câu chuyện, và có kết quả đo được, sẽ mạnh hơn nhiều so với một danh sách dài nhưng loãng.\n• Điều chỉnh kế hoạch linh hoạt. Vì không có hành trình nào giống nhau, và chúng tôi luôn sẵn sàng thích nghi.`;
 }
 
-function genSection2a(fullName: string, info: string, school: string, keyNotes: string): string {
+function genSection2(fullName: string, info: string, school: string, keyNotes: string, currentGrade: string): string {
   const name = fullName.split(" ").pop() ?? fullName;
+  const grade = parseInt(currentGrade) || 11;
   const ieltsMatch = (keyNotes + info).match(/IELTS[:\s]+([0-9.]+)/i);
   const satMatch = (keyNotes + info).match(/SAT[:\s]+([0-9]+)/i);
   const ielts = ieltsMatch
-    ? `IELTS ${ieltsMatch[1]} — đang trên đúng hướng, mục tiêu ≥ 7.5. Nếu Speaking còn thấp hơn các band khác, đó là nơi cần tập trung đầu tiên`
-    : "IELTS: chưa có điểm gốc — ưu tiên thi thử trong học kỳ này để biết mình đang ở đâu. Mục tiêu: ≥ 7.5";
+    ? `IELTS ${ieltsMatch[1]}, đang trên đúng hướng, mục tiêu 7.5 trở lên`
+    : "IELTS: chưa có điểm gốc. Ưu tiên thi thử trong học kỳ này để biết mình đang ở đâu. Mục tiêu: 7.5 trở lên";
   const sat = satMatch
-    ? `SAT ${satMatch[1]} — tiếp tục ôn đều 2–3 buổi/tuần, mục tiêu ≥ 1500`
-    : "SAT: chưa có điểm — đặt lịch thi lần đầu, không cần vội nhưng không nên để quá muộn. Mục tiêu: ≥ 1500";
-  const acts: string[] = [];
-  if (/hackathon/i.test(info))
-    acts.push(`Hoàn thiện hackathon project thành sản phẩm có câu chuyện rõ ràng — đây sẽ là một trong những điểm nhấn mạnh nhất trong hồ sơ của ${name}`);
-  if (/intern/i.test(info))
-    acts.push("Kết thúc internship và viết reflection thật thành thật — những gì em học được, những gì khiến em bất ngờ, và điều đó thay đổi cái nhìn của em về ngành như thế nào");
-  if (/research/i.test(info))
-    acts.push("Tham gia Research 101 của Elio — cơ hội để em trải nghiệm nghiên cứu thực và publish bài trên SPARK Academic Journal");
-  if (acts.length === 0) {
-    acts.push(`Tham gia Research 101 của Elio — xây dựng credibility học thuật theo chiều sâu, không chỉ chiều rộng`);
-    acts.push(`Tìm 1 dự án cá nhân ${name} thực sự muốn làm — không phải để ghi vào CV, mà để có thứ thực sự để kể trong bài luận`);
-  }
-  acts.push("Duy trì ít nhất 1 hoạt động em đã bắt đầu và cam kết với nó — sự kiên định có giá trị hơn nhiều so với việc thử nhiều thứ rồi bỏ");
+    ? `SAT ${satMatch[1]}, tiếp tục ôn đều 2 đến 3 buổi/tuần, mục tiêu 1500 trở lên`
+    : "SAT: chưa có điểm. Đặt lịch thi lần đầu. Mục tiêu: 1500 trở lên";
   const sc = school || "trường hiện tại";
-  return `LỚP 11 — GIAI ĐOẠN XÂY NỀN VÀ TÌM TIẾNG NÓI RIÊNG\n\nĐây là năm quan trọng nhất — không phải vì nó quyết định tất cả, mà vì những gì ${name} xây dựng trong năm này sẽ trở thành nguyên liệu cho toàn bộ hồ sơ.\n\n1. Học thuật & Chuẩn hóa — ${name} (${sc})\n• ${ielts}.\n• ${sat}.\n• GPA: tiếp tục duy trì, đặc biệt ở những môn liên quan đến ngành em dự định — đây là tín hiệu rõ ràng nhất về academic fit với trường.\n\n2. Hoạt động trọng điểm\n${acts.map(a => `• ${a}`).join("\n")}\n\n3. Hồ sơ & Danh sách trường\n• Bắt đầu brainstorm Common App essay — chưa cần viết, chỉ cần hỏi: "Câu chuyện nào của mình thực sự là của mình?"\n• Liên hệ 2 giáo viên thân thiết để xin thư giới thiệu — người hiểu em, không nhất thiết là người dạy môn khó nhất.\n• Phác thảo danh sách 10–15 trường cùng counselor: Reach (4–5), Match (4–5), Safety (2–3).`;
+
+  const parts: string[] = [];
+
+  if (grade <= 10) {
+    parts.push(`1. Lớp 10: Khám phá và Xây nền\n\nĐây là giai đoạn ${name} có thời gian nhiều nhất để khám phá bản thân. Chưa cần chạy theo bất kỳ deadline nào, nhưng những gì ${name} bắt đầu từ bây giờ sẽ tạo ra lợi thế rất lớn sau này.\n\n• Xác định hướng ngành sơ bộ. Không cần chính xác, chỉ cần một vùng quan tâm để bắt đầu đào sâu.\n• Bắt đầu ôn tiếng Anh nền tảng (IELTS hoặc TOEFL). Mục tiêu là nắm vững trước khi bước vào lớp 11.\n• Tham gia 1 đến 2 hoạt động ngoại khóa có chiều sâu. Không cần nhiều, cần sâu.\n• Duy trì GPA ổn định tại ${sc}. Nền tảng lớp 10 là phần quan trọng trong transcript.`);
+  }
+
+  if (grade <= 11) {
+    const gradeLabel = grade <= 10 ? "2" : "1";
+    parts.push(`${gradeLabel}. Lớp 11: Xây nền và Tìm tiếng nói riêng\n\nNếu có một giai đoạn mà mọi thứ bắt đầu trở nên thật, thì đó là lớp 11. Với ${name}, đây là lúc để hiểu rõ mình đang chạy về đâu và vì sao.\n\nHọc thuật & Chuẩn hóa:\n• ${ielts}.\n• ${sat}.\n• GPA: duy trì ổn định, đặc biệt ở những môn liên quan đến ngành dự định.\n\nHoạt động trọng điểm:\n• Tham gia Research 101 của Elio hoặc một dự án nghiên cứu có chiều sâu.\n• Tìm 1 dự án cá nhân ${name} thực sự muốn làm, để có chất liệu thực cho bài luận.\n• Duy trì ít nhất 1 hoạt động liên tục qua nhiều năm.\n\nHồ sơ & Danh sách trường:\n• Brainstorm Common App essay. Câu chuyện nào của mình thực sự là của mình?\n• Liên hệ 2 giáo viên để xin thư giới thiệu. Chọn người hiểu em.\n• Phác thảo danh sách 10 đến 15 trường: Reach (4 đến 5), Match (4 đến 5), Safety (2 đến 3).`);
+  }
+
+  const g12Label = grade <= 10 ? "3" : grade === 11 ? "2" : "1";
+  parts.push(`${g12Label}. Lớp 12: Hoàn thiện và Bước qua ngưỡng cửa\n\nElio sẽ đồng hành sát nhất trong giai đoạn này, để ${name} và gia đình không cảm thấy một mình.\n\n• Tháng 8 đến 11: Rà soát hồ sơ, hoàn thiện luận, nộp EA/ED cho các trường ưu tiên.\n• Tháng 12 đến 2: Cập nhật bảng điểm kỳ I, nộp các trường RD còn lại.\n• Tháng 1 đến 4: Luyện phỏng vấn, hoàn thiện hồ sơ tài chính, gửi update letter.\n• Tháng 4 đến 5: Phân tích offer, so sánh gói hỗ trợ, chọn trường phù hợp nhất.\n• Tháng 5 đến 8: Visa, pre-departure workshop, đăng ký ký túc xá và lịch học kỳ đầu.`);
+
+  return parts.join("\n\n");
 }
 
-function genSection2b(): string {
-  return `LỚP 12 — GIAI ĐOẠN KẾT THÚC VÀ BƯỚC QUA NGƯỠNG CỬA\n\nNếu Lớp 11 là xây nền, thì Lớp 12 là lúc toàn bộ công trình được hoàn thiện. Elio sẽ đồng hành sát nhất trong giai đoạn này — để học sinh và gia đình không cảm thấy một mình.\n\n1. Hoàn thiện & Nộp hồ sơ (Tháng 8–11)\n• Tháng 8: Rà soát tổng thể — bài luận, resume, bảng điểm, thư giới thiệu. Mọi thứ phải nhất quán và kể cùng một câu chuyện.\n• Tháng 9: Hoàn thiện bài luận chính và supplemental essays. Mỗi bài là cơ hội để hội đồng thấy một góc khác của học sinh — đừng lặp lại những gì đã có trong resume.\n• Tháng 11: Nộp EA/ED cho các trường ưu tiên — và thở. Đây là cột mốc quan trọng nhất của cả hành trình.\n\n2. Nộp hồ sơ RD (Tháng 12–2)\n• Tháng 12: Cập nhật bảng điểm kỳ I — một số trường rất để ý đến xu hướng điểm số cuối cấp.\n• Tháng 1–2: Nộp các trường RD còn lại. Elio sẽ theo dõi cùng và xử lý bất kỳ yêu cầu bổ sung nào từ phía trường.\n\n3. Hậu xét tuyển & Quyết định (Tháng 1–5)\n• Phỏng vấn: Elio tổ chức mock interview 2–3 lần — không phải để "luyện câu trả lời đúng", mà để học sinh tự tin kể câu chuyện của mình bằng tiếng Anh.\n• Hồ sơ tài chính: hỗ trợ điền CSS Profile, FAFSA, ISFAA — các hạn chót khác nhau theo từng trường, Elio sẽ nhắc và hướng dẫn từng bước.\n• Phân tích offer: so sánh học bổng, gói hỗ trợ tài chính, và các yếu tố phi tài chính — quyết định chọn trường là quyết định của cả gia đình, không chỉ là con số.\n\n4. Chuẩn bị hành trang (Tháng 5–8)\n• Hướng dẫn chứng minh tài chính, phỏng vấn visa, và các thủ tục nhập học.\n• Workshop Pre-Departure của Elio: không chỉ về văn hóa Mỹ — mà về cách sống tự lập, quản lý tiền, và giữ kết nối với gia đình từ xa.\n• Đăng ký ký túc xá, student portal, và lịch học kỳ đầu — để ngày đầu tiên bước vào khuôn viên trường, học sinh đã biết mình đang ở đâu và cần làm gì.`;
+function genSection3(fullName: string, targetSchools: string, intendedMajor: string): string {
+  const name = fullName.split(" ").pop() ?? fullName;
+  const schools = targetSchools || "chưa xác định";
+  const major = intendedMajor || "chưa xác định";
+  return `Dựa trên hồ sơ hiện tại của ${name}, ngành dự định (${major}), và mục tiêu đã thảo luận, dưới đây là gợi ý sơ bộ về các nhóm trường phù hợp. Danh sách này sẽ được điều chỉnh liên tục theo tiến độ thực tế.\n\nReach (4 đến 5 trường):\nĐây là những trường có tỷ lệ chấp nhận thấp, nhưng ${name} có profile phù hợp để nộp. Cần bài luận và câu chuyện thực sự nổi bật.\n\nMatch (4 đến 5 trường):\nNhững trường mà hồ sơ của ${name} nằm trong phạm vi competitive. Đây là nhóm trường có xác suất trúng tuyển cao nhất nếu hồ sơ được chuẩn bị kỹ.\n\nSafety (2 đến 3 trường):\nNhững trường mà ${name} gần như chắc chắn được nhận, nhưng vẫn là nơi em muốn học nếu được nhận.\n\nMục tiêu hiện tại: ${schools}\n\nGhi chú: Danh sách trường cụ thể sẽ được counselor cập nhật sau khi có đầy đủ điểm chuẩn hóa và đánh giá hoạt động ngoại khóa chi tiết hơn.`;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -298,7 +304,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
   onDownload: () => void;
   onBack: () => void;
   downloading: boolean;
-  onGenerateSection: (aiKey: "section1" | "section2a" | "section2b", sectionId: string) => void;
+  onGenerateSection: (aiKey: "section1" | "section2" | "section3", sectionId: string) => void;
   generatingSection: string | null;
   onFinalize: () => void;
   finalizing: boolean;
@@ -365,8 +371,8 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
   // ── Per-page footer ───────────────────────────────────────────────────────
   const PaperFooter = ({ page }: { page: number }) => (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 36, paddingTop: 10, borderTop: `1px solid ${p.rule}` }}>
-      <span style={{ fontSize: 9.5, fontStyle: "italic", color: p.inkLight, letterSpacing: "0.02em" }}>Một điểm đến, mọi bước đồng hành</span>
-      <span style={{ fontSize: 9.5, color: p.inkLight }}>{page}</span>
+      <span style={{ fontSize: 8, fontStyle: "italic", color: p.inkLight, fontFamily: bodyFont, letterSpacing: "0.02em" }}>Một điểm đến, mọi bước đồng hành</span>
+      <span style={{ fontSize: 8, color: p.inkLight, fontFamily: bodyFont }}>{page}</span>
     </div>
   );
 
@@ -398,17 +404,27 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
       if (/^─{4,}/.test(trimmed)) return (
         <div key={i} style={{ borderTop: `1px solid ${p.rule}`, margin: "10px 0" }} />
       );
-      // Numbered sub-heading: "1. Tiêu đề", "2. Nội dung"  →  Heading 2: 11px Medium
-      if (/^\d+\.\s+\S/.test(trimmed)) return (
-        <div key={i} style={{ fontSize: 11, fontWeight: 500, fontFamily: bodyFont, color: p.ink, marginTop: 14, marginBottom: 3, lineHeight: 1.4 }}>{parseInline(line)}</div>
+      // Markdown heading: "# Title" or "## Title" → render as styled heading, strip #
+      const hMatch = trimmed.match(/^(#{1,3})\s+(.+)/);
+      if (hMatch) {
+        const level = hMatch[1].length;
+        const headingText = hMatch[2];
+        const hSize = level === 1 ? 16 : level === 2 ? 13 : 11;
+        return (
+          <div key={i} style={{ fontSize: hSize, fontWeight: 500, fontFamily: bodyFont, color: level <= 2 ? p.brand : p.ink, marginTop: level === 1 ? 20 : 14, marginBottom: level === 1 ? 8 : 3, lineHeight: 1.3 }}>{parseInline(headingText)}</div>
+        );
+      }
+      // Numbered sub-heading: "1. Tiêu đề", "**1. Nội dung**"  →  Heading 2: 13px Medium
+      if (/^\*{0,2}\d+\.\s+\S/.test(trimmed)) return (
+        <div key={i} style={{ fontSize: 13, fontWeight: 500, fontFamily: bodyFont, color: p.ink, marginTop: 14, marginBottom: 3, lineHeight: 1.4 }}>{parseInline(line)}</div>
       );
       // Short all-caps-ish line (section banner like "LỚP 11 – TĂNG TỐC…")  →  Heading 2: 11px Medium
       const hasLower = /[a-zàáâãèéêìíòóôõùúăđĩũơư]/.test(trimmed);
       if (!hasLower && trimmed.length < 70 && !trimmed.startsWith("•")) return (
         <div key={i} style={{ fontSize: 11, fontWeight: 500, fontFamily: bodyFont, color: p.inkMed, marginTop: 16, marginBottom: 4, letterSpacing: "0.04em" }}>{line}</div>
       );
-      // Bullet  →  Body: bodyFontSize Regular
-      if (trimmed.startsWith("• ")) return (
+      // Bullet (• or -)  →  Body: bodyFontSize Regular
+      if (trimmed.startsWith("• ") || trimmed.startsWith("- ")) return (
         <div key={i} style={{ display: "flex", gap: 7, marginBottom: 3, alignItems: "flex-start" }}>
           <span style={{ color: p.brand, fontSize: bodyFontSize, lineHeight: 1.65, flexShrink: 0 }}>•</span>
           <span style={{ fontSize: bodyFontSize, lineHeight: 1.65, color: p.ink, fontFamily: bodyFont, fontWeight: 400 }}>{parseInline(trimmed.slice(2))}</span>
@@ -425,7 +441,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
     );
 
     if (s.type === "title") return (
-      <div key={s.id} style={{ fontSize: 24, fontWeight: 800, color: p.brand, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 4, marginTop: 8, lineHeight: 1.2 }}>
+      <div key={s.id} style={{ fontSize: 32, fontWeight: 400, color: p.brand, fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4, marginTop: 8, lineHeight: 1.2 }}>
         {s.content}
       </div>
     );
@@ -456,12 +472,12 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
       const value = ci >= 0 ? s.content.slice(ci + 1) : s.content;
       return (
         <div key={s.id} style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "0 12px", marginBottom: 7, alignItems: "baseline" }}>
-          <span style={{ fontSize: 10, fontWeight: 600, color: p.inkLight, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label.replace(":", "")}</span>
+          <span style={{ fontSize: 11, fontWeight: 500, color: p.ink, fontFamily: bodyFont }}>{label.replace(":", ":")}</span>
           {s.editable ? (
             <input value={s.content.slice(ci + 1).trimStart()} onChange={(e) => onChange(s.id, `${label} ${e.target.value}`)}
-              style={{ fontSize: 14, border: "none", borderBottom: `1px solid ${p.line}`, padding: "2px 0", background: "transparent", color: p.ink, outline: "none", fontFamily: "inherit", width: "100%" }} />
+              style={{ fontSize: 11, border: "none", borderBottom: `1px solid ${p.line}`, padding: "2px 0", background: "transparent", color: p.ink, outline: "none", fontFamily: bodyFont, width: "100%" }} />
           ) : (
-            <span style={{ fontSize: 14, color: p.ink }}>{value}</span>
+            <span style={{ fontSize: 11, color: p.ink, fontFamily: bodyFont }}>{value}</span>
           )}
         </div>
       );
@@ -586,10 +602,10 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
           {s.tableData.slice(1).map((row, ri) => (
             <tr key={ri} style={{ background: ri % 2 === 1 ? p.rowAlt : "transparent" }}>
               {row.map((cell, ci) => (
-                <td key={ci} style={{ padding: "5px 10px", borderBottom: `1px solid ${p.line}`, color: ci === 0 ? p.ink : p.inkMed, fontWeight: ci === 0 ? 600 : 400 }}>
+                <td key={ci} style={{ padding: "5px 10px", borderBottom: `1px solid ${p.line}`, color: ci === 0 ? p.ink : p.inkMed, fontWeight: ci === 0 ? 600 : 400, whiteSpace: "normal", wordBreak: "break-word" }}>
                   {s.editable ? (
-                    <input value={cell} onChange={(e) => updateTableCell(s.id, ri + 1, ci, e.target.value)}
-                      style={{ width: "100%", fontSize: 10.5, border: "none", background: "transparent", padding: 0, outline: "none", color: "inherit", fontFamily: "inherit", fontWeight: "inherit" }} />
+                    <textarea value={cell} onChange={(e) => updateTableCell(s.id, ri + 1, ci, e.target.value)} rows={1}
+                      style={{ width: "100%", fontSize: 10.5, border: "none", background: "transparent", padding: 0, outline: "none", color: "inherit", fontFamily: "inherit", fontWeight: "inherit", resize: "none", overflow: "hidden", lineHeight: 1.4, fieldSizing: "content" as never }} />
                   ) : cell}
                 </td>
               ))}
@@ -625,7 +641,100 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
     <div style={{ flex: 1, display: "flex", overflow: "hidden", background: p.bg }}>
       {/* ── Pages area ── */}
       <div style={{ flex: 1, overflowY: "auto", padding: "28px 24px 48px" }}>
-        {pages.map((pageSections, pi) => (
+        {pages.map((pageSections, pi) => {
+          // ── Cover page (first page) — dark green background ──
+          if (pi === 0) {
+            const subtitleSection = pageSections.find(s => s.type === "subtitle");
+            const infoSections = pageSections.filter(s => s.type === "info");
+            const studentInfo = infoSections.find(s => s.content.startsWith("Học sinh:"));
+            const birthInfo = infoSections.find(s => s.content.startsWith("Năm sinh:"));
+            const studentName = studentInfo ? studentInfo.content.split(":").slice(1).join(":").trim() : "";
+            const birthYear = birthInfo ? birthInfo.content.split(":").slice(1).join(":").trim() : "";
+            const cream = "#E8E0D0";
+            return (
+              <div key={pi} style={{
+                width: 620, minHeight: 877,
+                margin: "0 auto 28px",
+                background: p.brand, borderRadius: 2,
+                padding: "44px 56px 40px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.07)",
+                color: cream,
+                display: "flex", flexDirection: "column",
+                position: "relative", overflow: "hidden",
+              }}>
+                {/* Decorative arc overlays — two cubic bezier swooshes from PDF template */}
+                <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }} viewBox="0 0 595 842" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M -1391.86 980.03 C -1391.86 980.03 -1130.64 5.14 -204.52 278.17 C 698.26 544.32 472.82 1479.68 472.82 1479.68" fill="none" stroke="#ebf4df" strokeWidth="320" strokeOpacity="0.07" />
+                  <path d="M 187.05 101.14 C 187.05 101.14 1161.94 362.36 888.91 1288.48 C 622.76 2191.27 -312.59 1965.82 -312.59 1965.82" fill="none" stroke="#ebf4df" strokeWidth="320" strokeOpacity="0.07" />
+                </svg>
+
+                {/* Logo: icon mark + wordmark + tagline */}
+                <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative", zIndex: 1 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/elio-logo-white.svg" alt="Elio Education" style={{ height: 24, width: "auto" }} />
+                  <div style={{ width: 1, height: 28, background: "rgba(232,224,208,0.3)", marginLeft: 2 }} />
+                  <span style={{ fontSize: 10, fontStyle: "italic", color: cream, opacity: 0.7, lineHeight: 1.4 }}>Một điểm đến,<br />mọi bước đồng hành</span>
+                </div>
+
+                {/* Large title */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", position: "relative", zIndex: 1 }}>
+                  <div
+                    onClick={() => subtitleSection?.editable && setActiveSectionId(subtitleSection.id)}
+                    style={{
+                      fontSize: 44, fontWeight: 700, color: cream,
+                      fontFamily: "'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif",
+                      lineHeight: 1.15, marginTop: 48, marginBottom: 60,
+                      cursor: subtitleSection?.editable ? "text" : "default",
+                    }}
+                  >
+                    {activeSectionId === subtitleSection?.id ? (
+                      <textarea
+                        autoFocus
+                        value={subtitleSection.content}
+                        onChange={(e) => onChange(subtitleSection.id, e.target.value)}
+                        onBlur={() => setActiveSectionId(null)}
+                        style={{
+                          fontSize: 44, fontWeight: 700, color: cream,
+                          fontFamily: "'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif",
+                          lineHeight: 1.15, background: "rgba(255,255,255,0.08)",
+                          border: `1.5px solid ${cream}`, borderRadius: 4,
+                          padding: "8px 12px", outline: "none", width: "100%",
+                          resize: "none", minHeight: 120,
+                        }}
+                      />
+                    ) : (
+                      subtitleSection?.content || "Strategy Workshop"
+                    )}
+                  </div>
+
+                  {/* Student info — simplified */}
+                  <div style={{ borderTop: `1px solid rgba(232,224,208,0.25)`, paddingTop: 20, marginBottom: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.6, marginBottom: 6 }}>Student</div>
+                        <div style={{ fontSize: 16, fontWeight: 400 }}>{studentName}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.6, marginBottom: 6 }}>Year of Birth</div>
+                        <div style={{ fontSize: 16, fontWeight: 400 }}>{birthYear}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ borderTop: `1px solid rgba(232,224,208,0.25)` }} />
+                </div>
+
+                {/* Footer */}
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, opacity: 0.6, position: "relative", zIndex: 1, marginTop: 24 }}>
+                  <span>Hà Nội, Việt Nam</span>
+                  <span>info@elio.education</span>
+                  <span>(+84) 33 929 9925</span>
+                </div>
+              </div>
+            );
+          }
+
+          // ── Regular pages ──
+          return (
           <div key={pi} style={{
             width: 620, minHeight: 877,
             margin: "0 auto 28px",
@@ -636,22 +745,23 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
             display: "flex", flexDirection: "column",
           }}>
             <Letterhead />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: 430 }}>
               {pageSections.map(renderSection)}
             </div>
             <PaperFooter page={pi + 1} />
           </div>
-        ))}
+          );
+        })}
 
-        {/* Sticky action bar */}
-        <div style={{ position: "sticky", bottom: 0, padding: "14px 0 0", display: "flex", justifyContent: "center", gap: 10 }}>
-          <button className="btn btn-ghost" onClick={onBack} style={{ fontSize: 13 }}>← Back</button>
+        {/* Action bar at end of document */}
+        <div style={{ padding: "14px 0 24px", display: "flex", justifyContent: "center", gap: 10 }}>
+          <button className="btn btn-ghost" onClick={onBack} style={{ fontSize: 13, color: "#4A5568" }}>← Back</button>
           <button className="btn btn-ghost" onClick={onDownload} disabled={downloading}
-            style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6, cursor: downloading ? "not-allowed" : "pointer" }}>
+            style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6, cursor: downloading ? "not-allowed" : "pointer", color: "#4A5568" }}>
             {downloading ? <><SpinIcon /> Generating…</> : "Download .docx"}
           </button>
           <button className="btn" onClick={onFinalize} disabled={finalizing || downloading}
-            style={{ fontSize: 13, fontWeight: 700, background: finalizing ? "var(--bg-2)" : "var(--accent)", color: finalizing ? "var(--ink-3)" : "var(--bg)", border: "none", display: "flex", alignItems: "center", gap: 6, cursor: (finalizing || downloading) ? "not-allowed" : "pointer" }}>
+            style={{ fontSize: 13, fontWeight: 700, background: finalizing ? "#CBD5CE" : p.brand, color: "#fff", border: "none", display: "flex", alignItems: "center", gap: 6, cursor: (finalizing || downloading) ? "not-allowed" : "pointer" }}>
             {finalizing ? <><SpinIcon /> Saving…</> : "✓ Finalize & Save"}
           </button>
         </div>
@@ -761,26 +871,20 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
     n.areaForImprovement ? `\nĐiểm cần phát triển:\n${n.areaForImprovement}` : "",
     n.keyNotes ? `\nTổng quan:\n${n.keyNotes}` : "",
   ].filter(Boolean).join("").trim()
-    || `Phương pháp Elio: Xây dựng hồ sơ có chiều sâu, gắn kết tất cả hoạt động và bài luận vào một narrative nhất quán.\n\nMục tiêu: Hồ sơ thuyết phục cả về học thuật, cá nhân, và tầm nhìn nghề nghiệp — giúp tăng cơ hội vào trường mục tiêu và học bổng.`;
+    || `Phương pháp Elio: Xây dựng hồ sơ có chiều sâu, gắn kết tất cả hoạt động và bài luận vào một narrative nhất quán.\n\nMục tiêu: Hồ sơ thuyết phục cả về học thuật, cá nhân, và tầm nhìn nghề nghiệp, giúp tăng cơ hội vào trường mục tiêu và học bổng.`;
 
-  const buildSection2a = (n: NoteState) => [
-    "LỚP 11 – TĂNG TỐC VÀ HOÀN THIỆN\n\n",
-    n.academicPlan   ? `1. Học thuật & Chuẩn hóa\n${n.academicPlan}\n`   : "1. Học thuật & Chuẩn hóa\nXây dựng kế hoạch ôn luyện SAT/IELTS phù hợp, duy trì GPA ổn định.\n",
-    n.keyActivities  ? `\n2. Hoạt động trọng điểm\n${n.keyActivities}\n`  : "\n2. Hoạt động trọng điểm\nTriển khai dự án cá nhân và tham gia các hoạt động ngoại khóa có chiều sâu.\n",
-    n.profileStrategy ? `\n3. Hồ sơ & Chọn trường\n${n.profileStrategy}` : "\n3. Hồ sơ & Chọn trường\nXây dựng danh sách trường và bắt đầu brainstorm bài luận.",
-  ].join("").trim();
+  const buildSection2 = (n: NoteState) => {
+    const currentGrade = student.level?.match(/\d+/)?.[0] || "11";
+    return genSection2(student.fullName, student.studentInfo || "", n.school || student.school || "", n.keyNotes, currentGrade);
+  };
 
-  const buildSection2b = (_n: NoteState) => [
-    "LỚP 12 – NỘP HỒ SƠ VÀ CHUẨN BỊ NHẬP HỌC\n\n",
-    "1. Hoàn thiện & Nộp hồ sơ (Tháng 8–11)\nMục tiêu: Nộp EA/ED (tháng 10–11) và RD (tháng 1–2).\n\n• Tháng 8: Rà soát toàn bộ hồ sơ (bài luận, resume, bảng điểm, thư giới thiệu).\n• Tháng 9: Hoàn thiện và cập nhật luận chính + luận phụ với thông tin mới nhất.\n• Tháng 11: Nộp EA/ED cho các trường ưu tiên; theo dõi xác nhận từ trường.\n\n",
-    "2. Nộp hồ sơ RD (Tháng 12–2)\n• Tháng 12: Cập nhật bảng điểm kỳ I, chuẩn bị bổ sung theo yêu cầu từng trường.\n• Tháng 1–2: Nộp RD; xác nhận phí nộp và theo dõi trạng thái hồ sơ.\n\n",
-    "3. Hậu xét tuyển (Tháng 1–4)\n• Luyện phỏng vấn với mentor Elio (mock interview 2–3 lần).\n• Hoàn thiện hồ sơ tài chính (CSS Profile, ISFAA, FAFSA nếu cần).\n• Gửi bổ sung thành tích hoặc giải thưởng mới (update letter).\n\n",
-    "4. Quyết định nhập học (Tháng 4–5)\n• Phân tích thư mời nhập học, gói hỗ trợ tài chính, học bổng.\n• Thảo luận học sinh – phụ huynh – counselor để chọn trường phù hợp nhất.\n\n",
-    "5. Visa & Chuẩn bị hành trang (Tháng 5–8)\n• Hướng dẫn chứng minh tài chính, đặt lịch phỏng vấn visa, chuẩn bị hồ sơ.\n• Workshop Pre-Departure của Elio: văn hóa Mỹ, quản lý tài chính, an toàn và sức khỏe.\n• Đăng ký ký túc xá, kích hoạt student portal, đăng ký lớp học kỳ đầu.",
-  ].join("").trim();
+  const buildSection3 = (n: NoteState) => {
+    return genSection3(student.fullName, n.targetSchools, n.intendedMajor);
+  };
 
   // ── Claude API helper ──────────────────────────────────────────────────────
-  const generateViaAPI = async (aiKey: "section1" | "section2a" | "section2b"): Promise<string> => {
+  const generateViaAPI = async (aiKey: "section1" | "section2" | "section3"): Promise<string> => {
+    const currentGrade = student.level?.match(/\d+/)?.[0] || "11";
     const res = await fetch("/api/generate/section", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -792,6 +896,8 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
         school: note.school || student.school || "",
         keyNotes: note.keyNotes,
         intendedMajor: note.intendedMajor,
+        targetSchools: note.targetSchools,
+        currentGrade,
       }),
     });
     if (!res.ok) throw new Error("Generation API failed");
@@ -800,7 +906,7 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
   };
 
   // ── In-preview AI section generators ──────────────────────────────────────
-  const handleGenerateSection = async (aiKey: "section1" | "section2a" | "section2b", sectionId: string) => {
+  const handleGenerateSection = async (aiKey: "section1" | "section2" | "section3", sectionId: string) => {
     if (generatingSection) return;
     setGeneratingSection(sectionId);
     try {
@@ -808,10 +914,11 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
       setProposalSections(prev => prev.map(s => s.id === sectionId ? { ...s, content } : s));
     } catch {
       // Fallback to mock if API fails
+      const currentGrade = student.level?.match(/\d+/)?.[0] || "11";
       let content = "";
-      if (aiKey === "section1")  content = genSection1(student.fullName, student.studentInfo || "", student.issues ?? []);
-      if (aiKey === "section2a") content = genSection2a(student.fullName, student.studentInfo || "", note.school || student.school || "", note.keyNotes);
-      if (aiKey === "section2b") content = genSection2b();
+      if (aiKey === "section1") content = genSection1(student.fullName, student.studentInfo || "", student.issues ?? []);
+      if (aiKey === "section2") content = genSection2(student.fullName, student.studentInfo || "", note.school || student.school || "", note.keyNotes, currentGrade);
+      if (aiKey === "section3") content = genSection3(student.fullName, note.targetSchools, note.intendedMajor);
       setProposalSections(prev => prev.map(s => s.id === sectionId ? { ...s, content } : s));
     } finally {
       setGeneratingSection(null);
@@ -820,6 +927,7 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
 
   const handleCreateProposal = async () => {
     onSave(buildFull(), note.keyNotes);
+    const currentGrade = student.level?.match(/\d+/)?.[0] || "11";
     // Show preview immediately with loading placeholders, then fill in AI content
     const placeholderSections = buildProposalSections({
       studentName: student.fullName,
@@ -828,15 +936,16 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
       intendedMajor: note.intendedMajor,
       targetSchools: note.targetSchools,
       servicePeriod: note.servicePeriod,
+      currentGrade,
       section1: "Đang tạo nội dung…",
-      section2a: "Đang tạo nội dung…",
-      section2b: "Đang tạo nội dung…",
+      section2: "Đang tạo nội dung…",
+      section3: "Đang tạo nội dung…",
     });
     setProposalSections(placeholderSections);
     setStep("preview");
 
     // Generate all three sections in parallel via Claude API
-    const keys: ("section1" | "section2a" | "section2b")[] = ["section1", "section2a", "section2b"];
+    const keys: ("section1" | "section2" | "section3")[] = ["section1", "section2", "section3"];
     await Promise.all(keys.map(async (aiKey) => {
       try {
         const content = await generateViaAPI(aiKey);
@@ -844,8 +953,8 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
       } catch {
         const fallback =
           aiKey === "section1" ? genSection1(student.fullName, student.studentInfo || "", student.issues ?? []) :
-          aiKey === "section2a" ? genSection2a(student.fullName, student.studentInfo || "", note.school || student.school || "", note.keyNotes) :
-          genSection2b();
+          aiKey === "section2" ? genSection2(student.fullName, student.studentInfo || "", note.school || student.school || "", note.keyNotes, currentGrade) :
+          genSection3(student.fullName, note.targetSchools, note.intendedMajor);
         setProposalSections(prev => prev.map(s => s.aiKey === aiKey ? { ...s, content: fallback } : s));
       }
     }));
@@ -881,7 +990,7 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
     setFinalizing(true);
     try {
       // Extract the three AI-generated sections by aiKey
-      const aiSections = (["section1", "section2a", "section2b"] as const).flatMap((key) => {
+      const aiSections = (["section1", "section2", "section3"] as const).flatMap((key) => {
         const s = proposalSections.find((p) => p.aiKey === key);
         if (!s || !s.content.trim()) return [];
         return [{

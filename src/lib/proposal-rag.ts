@@ -7,7 +7,7 @@ const COLLECTION = "proposal_sections";
 // Atlas Search index name — must match what you create in the Atlas UI
 export const VECTOR_INDEX_NAME = "proposal_embedding_index";
 
-export type SectionType = "section1" | "section2a" | "section2b";
+export type SectionType = "section1" | "section2" | "section3";
 
 export interface ProposalSectionDoc {
   _id?: ObjectId;
@@ -145,7 +145,7 @@ export async function getCorpusStats(): Promise<Record<SectionType, number>> {
     .aggregate([{ $group: { _id: "$sectionType", count: { $sum: 1 } } }])
     .toArray();
 
-  const stats: Record<SectionType, number> = { section1: 0, section2a: 0, section2b: 0 };
+  const stats: Record<SectionType, number> = { section1: 0, section2: 0, section3: 0 };
   for (const c of counts) {
     if (c._id in stats) stats[c._id as SectionType] = c.count;
   }

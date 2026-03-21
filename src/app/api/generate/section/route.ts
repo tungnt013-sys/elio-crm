@@ -11,13 +11,15 @@ GIỌNG VĂN: Chuyên gia khiêm tốn — ấm áp, cá nhân hóa, và thực 
 Điều cần nhớ khi viết: hành trình vào đại học không chỉ là một quy trình tuyển sinh — đó là lần đầu tiên một người trẻ tự định hướng cuộc đời mình, xa gia đình, xa những gì quen thuộc. Viết với nhận thức đó.
 
 ĐỊNH DẠNG:
+- CHỈ viết nội dung body của section. TUYỆT ĐỐI KHÔNG bao gồm: tên công ty (ELIO EDUCATION), tiêu đề proposal, thông tin học sinh (Học sinh, Trường, Ngành), đường kẻ (---), hoặc bất kỳ header/metadata nào. Những phần đó đã có sẵn bên ngoài.
+- Không dùng dấu # để tạo heading. Dùng số thứ tự (1. 2. 3.) cho các phần nhỏ.
+- Không dùng em dash (—). Dùng dấu chấm hoặc dấu phẩy thay thế.
 - Văn xuôi kết hợp danh sách có dấu chấm (•)
-- Không dùng tiêu đề in đậm trong nội dung section (tiêu đề đã có sẵn ngoài)
 - Viết bằng tiếng Việt hoàn toàn
 - Độ dài: 200–350 từ mỗi section
 - Không mở đầu bằng tên học sinh ngay câu đầu tiên`;
 
-type SectionType = "section1" | "section2a" | "section2b";
+type SectionType = "section1" | "section2" | "section3";
 
 function buildPrompt(
   sectionType: SectionType,
@@ -27,9 +29,12 @@ function buildPrompt(
   school: string,
   keyNotes: string,
   intendedMajor: string,
+  targetSchools: string,
+  currentGrade: string,
 ): string {
   const name = fullName.split(" ").pop() ?? fullName;
   const issueList = issues.length > 0 ? issues.join("; ") : "chưa có ghi chú cụ thể";
+  const grade = parseInt(currentGrade) || 11;
 
   const context = `
 Học sinh: ${fullName} (${name})
@@ -37,20 +42,21 @@ Trường: ${school || "chưa xác định"}
 Ngành dự định: ${intendedMajor || "chưa xác định"}
 Hồ sơ học sinh: ${studentInfo || "chưa có thông tin"}
 Điểm cần cải thiện: ${issueList}
-Ghi chú buổi làm việc: ${keyNotes || "chưa có ghi chú"}`.trim();
+Ghi chú buổi làm việc: ${keyNotes || "chưa có ghi chú"}
+Lớp hiện tại: ${grade}`.trim();
 
   if (sectionType === "section1") {
     return `${context}
 
 Viết nội dung cho Section I: CHIẾN LƯỢC TỔNG THỂ của proposal cho ${fullName}.
 
-Bao gồm:
-1. Nhận xét cá nhân về điểm mạnh thực sự của ${name} (dựa trên thông tin trên — không bịa)
-2. Những điểm cần tập trung phát triển (nếu có issues, dùng chúng; nếu không, đưa ra nhận định chung)
-3. Chiến lược tổng thể của Elio cho hành trình này — phải phản ánh đúng con người của ${name}, không chỉ là template chung`;
+Bao gồm 3 phần con, dùng số thứ tự:
+1. Điểm mạnh. Nhận xét cá nhân về điểm mạnh thực sự của ${name} (dựa trên thông tin trên, không bịa). Viết mở đầu bằng một quan sát chân thực, sau đó liệt kê 2 đến 3 điểm mạnh cụ thể.
+2. Những điểm có thể Phát triển. Nếu có issues, dùng chúng. Nếu không, đưa ra 2 đến 3 nhận định thực tế về những gì ${name} cần cải thiện.
+3. Định hướng. Chiến lược tổng thể của Elio cho hành trình này, phản ánh đúng con người của ${name}. Nêu 3 trụ cột chính.`;
   }
 
-  if (sectionType === "section2a") {
+  if (sectionType === "section2") {
     const ieltsMatch = (keyNotes + studentInfo).match(/IELTS[:\s]+([0-9.]+)/i);
     const satMatch = (keyNotes + studentInfo).match(/SAT[:\s]+([0-9]+)/i);
     const testContext = [
@@ -58,36 +64,50 @@ Bao gồm:
       satMatch ? `SAT hiện tại: ${satMatch[1]}` : "SAT: chưa có điểm",
     ].join(", ");
 
+    const gradeSections: string[] = [];
+    let sectionNum = 1;
+
+    if (grade <= 10) {
+      gradeSections.push(`${sectionNum}. Lớp 10: Khám phá và Xây nền. Xác định hướng ngành, bắt đầu ôn tiếng Anh, tham gia 1 đến 2 hoạt động ngoại khóa có chiều sâu, duy trì GPA.`);
+      sectionNum++;
+    }
+    if (grade <= 11) {
+      gradeSections.push(`${sectionNum}. Lớp 11: Xây nền và Tìm tiếng nói riêng. Bao gồm: Học thuật & Chuẩn hóa (IELTS/SAT/GPA), Hoạt động trọng điểm (2 đến 3 hoạt động), Hồ sơ & Danh sách trường.`);
+      sectionNum++;
+    }
+    gradeSections.push(`${sectionNum}. Lớp 12: Hoàn thiện và Bước qua ngưỡng cửa. Timeline: Tháng 8 đến 11 nộp EA/ED, Tháng 12 đến 2 nộp RD, Tháng 1 đến 4 hậu xét tuyển, Tháng 4 đến 5 quyết định, Tháng 5 đến 8 chuẩn bị.`);
+
     return `${context}
 Tình trạng thi cử: ${testContext}
 
-Viết nội dung cho Section II — LỚP 11: GIAI ĐOẠN XÂY NỀN VÀ TÌM TIẾNG NÓI RIÊNG cho ${fullName}.
+Viết nội dung cho Section II: LỘ TRÌNH THEO NĂM HỌC cho ${fullName}.
 
-Bao gồm 3 phần rõ ràng:
-1. Học thuật & Chuẩn hóa — kế hoạch IELTS/SAT/GPA cụ thể dựa trên tình trạng hiện tại
-2. Hoạt động trọng điểm — đề xuất 2–3 hoạt động phù hợp với profile (dựa trên studentInfo)
-3. Hồ sơ & Danh sách trường — các bước chuẩn bị essay và chọn trường
+Học sinh hiện đang lớp ${grade}. Viết lộ trình từ lớp hiện tại đến hết lớp 12.
 
-Viết thực tế và cá nhân hóa cho ${name}, không viết chung chung.`;
+Bao gồm các phần con:
+${gradeSections.join("\n")}
+
+Viết thực tế và cá nhân hóa cho ${name}, không viết chung chung. Mỗi giai đoạn nên có bullet points cụ thể.`;
   }
 
-  // section2b
+  // section3
   return `${context}
+Mục tiêu trường: ${targetSchools || "chưa xác định"}
 
-Viết nội dung cho Section II — LỚP 12: GIAI ĐOẠN KẾT THÚC VÀ BƯỚC QUA NGƯỠNG CỬA cho ${fullName}.
+Viết nội dung cho Section III: GỢI Ý CÁC TRƯỜNG PHÙ HỢP cho ${fullName}.
 
-Bao gồm 4 giai đoạn theo timeline:
-1. Hoàn thiện & Nộp hồ sơ (Tháng 8–11) — EA/ED strategy
-2. Nộp hồ sơ RD (Tháng 12–2)
-3. Hậu xét tuyển & Quyết định (Tháng 1–5) — phỏng vấn, tài chính, chọn trường
-4. Chuẩn bị hành trang (Tháng 5–8) — visa, pre-departure
+Bao gồm:
+1. Mở đầu bằng 1 đến 2 câu giải thích logic chọn trường dựa trên profile của ${name}.
+2. Chia thành 3 nhóm: Reach (4 đến 5 trường), Match (4 đến 5 trường), Safety (2 đến 3 trường).
+3. Với mỗi nhóm, giải thích ngắn gọn vì sao nhóm đó phù hợp.
+4. Kết bằng ghi chú: danh sách sẽ được cập nhật khi có thêm điểm chuẩn hóa và đánh giá hoạt động chi tiết hơn.
 
-Viết với giọng đồng hành — Elio sẽ ở đây cùng học sinh và gia đình qua từng bước.`;
+Nếu có thông tin về mục tiêu trường, tham khảo. Nếu không, đưa ra gợi ý dựa trên ngành và profile.`;
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { sectionType, fullName, studentInfo, issues, school, keyNotes, intendedMajor } = body;
+  const { sectionType, fullName, studentInfo, issues, school, keyNotes, intendedMajor, targetSchools, currentGrade } = body;
 
   if (!sectionType || !fullName) {
     return NextResponse.json({ error: "sectionType and fullName are required" }, { status: 400 });
@@ -102,6 +122,8 @@ export async function POST(req: NextRequest) {
       school ?? "",
       keyNotes ?? "",
       intendedMajor ?? "",
+      targetSchools ?? "",
+      currentGrade ?? "11",
     );
 
     // Inject a corpus example as few-shot context if available
@@ -126,7 +148,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unexpected response type" }, { status: 500 });
     }
 
-    return NextResponse.json({ content: content.text });
+    // Strip any accidental headers/metadata the model may have included
+    let text = content.text;
+    const headerPatterns = [
+      /^#+ .*ELIO.*$/m,
+      /^ELIO EDUCATION$/m,
+      /^Lộ trình Ứng tuyển.*$/m,
+      /^Học sinh:.*$/m,
+      /^Trường:.*$/m,
+      /^Ngành dự định:.*$/m,
+      /^Cố vấn phụ trách:.*$/m,
+      /^Năm sinh:.*$/m,
+      /^---+$/m,
+    ];
+    for (const pat of headerPatterns) {
+      text = text.replace(pat, "");
+    }
+    // Remove leading blank lines
+    text = text.replace(/^\n+/, "").trim();
+
+    return NextResponse.json({ content: text });
   } catch (err) {
     console.error("[generate/section]", err);
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });

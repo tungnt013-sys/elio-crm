@@ -7,9 +7,9 @@ import { Suspense } from "react";
 const IS_DEV = process.env.NEXT_PUBLIC_DEV_LOGIN === "true";
 
 const DEV_USERS = [
-  { email: "tung@elio.education",    name: "Tùng (Admin)" },
-  { email: "hang.nm@elio.education", name: "Hằng (Sales)" },
-  { email: "chi.tm@elio.education",  name: "Chi (Sales View)" },
+  { email: "tung@elio.education",      name: "Admin" },
+  { email: "counselor@elio.education", name: "Counselor" },
+  { email: "hang.nm@elio.education",   name: "Sales" },
 ];
 
 function LoginContent() {

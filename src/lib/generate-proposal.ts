@@ -26,13 +26,15 @@ import { saveAs } from "file-saver";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type AISectionKey = "section1" | "section2" | "section3";
+
 export type ProposalSection = {
   id: string;
   type: "title" | "subtitle" | "info" | "h2" | "body" | "closing" | "divider" | "page-break" | "table";
   content: string;
   editable: boolean;
   tableData?: string[][];
-  aiKey?: "section1" | "section2a" | "section2b";
+  aiKey?: AISectionKey;
 };
 
 export interface ProposalInput {
@@ -42,9 +44,10 @@ export interface ProposalInput {
   intendedMajor: string;
   targetSchools: string;
   servicePeriod: string;
-  section1: string;    // I. Chiến lược tổng thể
-  section2a: string;   // II. Lộ trình — Lớp 11
-  section2b: string;   // II. Lộ trình — Lớp 12
+  currentGrade: string;  // e.g. "10", "11"
+  section1: string;      // I. Chiến lược tổng thể
+  section2: string;      // II. Lộ trình theo năm học
+  section3: string;      // III. Gợi ý các trường phù hợp
 }
 
 // ── Static closing text ───────────────────────────────────────────────────────
@@ -68,10 +71,34 @@ function sid(): string { return `ps-${++_sid}`; }
 
 export function buildProposalSections(input: ProposalInput): ProposalSection[] {
   _sid = 0;
-  const { studentName, birthYear, school, intendedMajor, targetSchools, servicePeriod, section1, section2a, section2b } = input;
+  const { studentName, birthYear, school, intendedMajor, targetSchools, servicePeriod, currentGrade, section1, section2, section3 } = input;
+
+  // Build timeline rows dynamically based on current grade
+  const grade = parseInt(currentGrade) || 11;
+  const timelineRows: string[][] = [["Thời gian", "Hạng mục", "Chi tiết"]];
+  if (grade <= 10) {
+    timelineRows.push(
+      ["T9–12 (Lớp 10)", "Khám phá", "Xác định hướng ngành, tham gia CLB/hoạt động, xây nền tảng tiếng Anh"],
+      ["T1–5 (Lớp 10)", "Nền tảng", "Bắt đầu ôn IELTS, tìm hiểu các chương trình mùa hè, duy trì GPA"],
+    );
+  }
+  if (grade <= 11) {
+    timelineRows.push(
+      ["T9–12 (Lớp 11)", "Học thuật", "Ôn thi SAT/IELTS, duy trì GPA, đăng ký thi chuẩn hóa"],
+      ["T1–4 (Lớp 11)", "Hoạt động", "Triển khai dự án cá nhân, tham gia cuộc thi, tìm thực tập/nghiên cứu"],
+      ["T5–8 (Lớp 11)", "Hồ sơ", "Viết luận chính, xin thư giới thiệu, chốt danh sách trường"],
+    );
+  }
+  timelineRows.push(
+    ["T8–11 (Lớp 12)", "Nộp EA/ED", "Rà soát hồ sơ, hoàn thiện luận, nộp đợt sớm"],
+    ["T12–2 (Lớp 12)", "Nộp RD", "Cập nhật bảng điểm, nộp đợt thường"],
+    ["T1–4 (Lớp 12)", "Hậu xét tuyển", "Phỏng vấn, hồ sơ tài chính, update letter"],
+    ["T4–5 (Lớp 12)", "Quyết định", "Phân tích offer, chọn trường, đặt cọc"],
+    ["T5–8 (Lớp 12)", "Chuẩn bị", "Visa, pre-departure workshop, đăng ký ký túc xá"],
+  );
 
   return [
-    // ── PAGE 1: Cover ──
+    // ── Cover ──
     { id: sid(), type: "subtitle", content: "Lộ trình Ứng tuyển Đại học – Cá nhân hóa",               editable: true  },
     { id: sid(), type: "divider",  content: "",                                                        editable: false },
     { id: sid(), type: "info",     content: `Học sinh: ${studentName}`,                               editable: true  },
@@ -81,43 +108,29 @@ export function buildProposalSections(input: ProposalInput): ProposalSection[] {
     { id: sid(), type: "info",     content: `Mục tiêu trường: ${targetSchools}`,                      editable: true  },
     { id: sid(), type: "info",     content: `Thời gian triển khai: ${servicePeriod}`,                 editable: true  },
 
-    // ── PAGE 2: Section I ──
+    // ── I. Chiến lược tổng thể ──
     { id: sid(), type: "page-break", content: "", editable: false },
-    { id: sid(), type: "h2",   content: "I. CHIẾN LƯỢC TỔNG THỂ", editable: false },
+    { id: sid(), type: "h2",   content: "I. Chiến lược Tổng thể", editable: false },
     { id: sid(), type: "body", content: section1, editable: true, aiKey: "section1" },
 
-    // ── PAGE 3: Section II — Lớp 11 ──
+    // ── II. Lộ trình theo năm học ──
     { id: sid(), type: "page-break", content: "", editable: false },
-    { id: sid(), type: "h2",   content: "II. LỘ TRÌNH THEO NĂM HỌC — Lớp 11", editable: false },
-    { id: sid(), type: "body", content: section2a, editable: true, aiKey: "section2a" },
+    { id: sid(), type: "h2",   content: "II. Lộ trình theo Năm học", editable: false },
+    { id: sid(), type: "body", content: section2, editable: true, aiKey: "section2" },
 
-    // ── PAGE 4: Section II — Lớp 12 ──
+    // ── III. Gợi ý các trường phù hợp ──
     { id: sid(), type: "page-break", content: "", editable: false },
-    { id: sid(), type: "h2",   content: "II. LỘ TRÌNH THEO NĂM HỌC — Lớp 12", editable: false },
-    { id: sid(), type: "body", content: section2b, editable: true, aiKey: "section2b" },
+    { id: sid(), type: "h2",   content: "III. Gợi ý các Trường phù hợp", editable: false },
+    { id: sid(), type: "body", content: section3, editable: true, aiKey: "section3" },
 
-    // ── PAGE 5: Section III ──
+    // ── IV. Timeline ──
     { id: sid(), type: "page-break", content: "", editable: false },
-    { id: sid(), type: "h2",  content: "III. TIMELINE", editable: false },
-    {
-      id: sid(), type: "table", content: "", editable: true,
-      tableData: [
-        ["Thời gian", "Hạng mục", "Chi tiết"],
-        ["T9–12 (Lớp 11)", "Học thuật",    "Ôn thi SAT/IELTS, duy trì GPA, đăng ký thi chuẩn hóa"],
-        ["T1–4 (Lớp 11)",  "Hoạt động",   "Triển khai dự án cá nhân, tham gia cuộc thi, tìm thực tập"],
-        ["T5–8 (Lớp 11)",  "Hồ sơ",       "Viết luận chính, xin thư giới thiệu, chốt danh sách trường"],
-        ["T8–11 (Lớp 12)", "Nộp EA/ED",   "Rà soát hồ sơ, hoàn thiện luận, nộp đợt sớm"],
-        ["T12–2 (Lớp 12)", "Nộp RD",      "Cập nhật bảng điểm, nộp đợt thường"],
-        ["T1–4 (Lớp 12)",  "Hậu xét tuyển","Phỏng vấn, hồ sơ tài chính, update letter"],
-        ["T4–5 (Lớp 12)",  "Quyết định",  "Phân tích offer, chọn trường, đặt cọc"],
-        ["T5–8 (Lớp 12)",  "Chuẩn bị",   "Visa, pre-departure workshop, đăng ký ký túc"],
-      ],
-    },
+    { id: sid(), type: "h2",  content: "IV. Timeline", editable: false },
+    { id: sid(), type: "table", content: "", editable: true, tableData: timelineRows },
 
-    // ── PAGE 6: Section IV (static) ──
+    // ── Cam kết (closing) ──
     { id: sid(), type: "page-break", content: "", editable: false },
-    { id: sid(), type: "h2",      content: "IV. CAM KẾT",  editable: false },
-    { id: sid(), type: "closing", content: CLOSING_TEXT,   editable: true  },
+    { id: sid(), type: "closing", content: CLOSING_TEXT, editable: true },
   ];
 }
 
@@ -173,20 +186,20 @@ function sectionToDocx(s: ProposalSection): (Paragraph | Table)[] {
   switch (s.type) {
 
     case "title":
-      return [para({ spaceBefore: 720, spaceAfter: 80, children: [tx(s.content, { bold: true, size: 52, color: BRAND, allCaps: true })] })];
+      return [para({ spaceBefore: 720, spaceAfter: 80, children: [tx(s.content, { size: 64, color: BRAND })] })];
 
     case "subtitle":
-      return [para({ spaceAfter: 40, children: [tx(s.content, { italics: true, size: 24, color: INK_MED })] })];
+      return [para({ spaceAfter: 40, children: [tx(s.content, { bold: true, size: 40, color: INK })] })];
 
     case "info": {
       const ci = s.content.indexOf(":");
       const label = ci >= 0 ? s.content.slice(0, ci + 1) : "";
       const value = ci >= 0 ? s.content.slice(ci + 1) : s.content;
-      return [para({ spaceBefore: 40, spaceAfter: 40, lineRule: 240, children: [tx(label, { bold: true, size: 20, color: INK_LIGHT }), tx(value, { size: 20 })] })];
+      return [para({ spaceBefore: 40, spaceAfter: 40, lineRule: 240, children: [tx(label, { bold: true, size: 22, color: INK }), tx(value, { size: 22 })] })];
     }
 
     case "h2":
-      return [para({ spaceBefore: 440, spaceAfter: 200, borderBottom: true, children: [tx(s.content, { bold: true, size: 26, color: BRAND, allCaps: true })] })];
+      return [para({ spaceBefore: 440, spaceAfter: 200, borderBottom: true, children: [tx(s.content, { bold: true, size: 32, color: BRAND })] })];
 
     case "body":
     case "closing":
@@ -266,9 +279,9 @@ export async function downloadProposalDocx(sections: ProposalSection[], studentN
     spacing: { before: 120, after: 0 },
     border: { top: { style: BorderStyle.SINGLE, size: 3, color: RULE, space: 6 } },
     children: [
-      tx("Một điểm đến, mọi bước đồng hành", { italics: true, size: 18, color: INK_LIGHT }),
+      tx("Một điểm đến, mọi bước đồng hành", { italics: true, size: 16, color: INK_LIGHT }),
       new TextRun({ children: ["\t"] }),
-      new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 18, color: INK_LIGHT }),
+      new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 16, color: INK_LIGHT }),
     ],
   });
 
