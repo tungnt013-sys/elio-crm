@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { StudentDetail, Meeting, CounselorNote } from "@/lib/mock-data";
-import { buildProposalSections, downloadProposalDocx, type ProposalSection } from "@/lib/generate-proposal";
+import { buildProposalSections, type ProposalSection } from "@/lib/generate-proposal";
+import { downloadProposalPdf } from "@/lib/generate-proposal-pdf";
 
 // ── Mock AI generators ────────────────────────────────────────────────────────
 
@@ -301,16 +302,17 @@ function StarIcon() {
 function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, onGenerateSection, generatingSection, onFinalize, finalizing }: {
   sections: ProposalSection[];
   onChange: (id: string, content: string) => void;
-  onDownload: () => void;
+  onDownload: (containerEl: HTMLElement) => void;
   onBack: () => void;
   downloading: boolean;
   onGenerateSection: (aiKey: "section1" | "section2" | "section3", sectionId: string) => void;
   generatingSection: string | null;
-  onFinalize: () => void;
+  onFinalize: (containerEl: HTMLElement) => void;
   finalizing: boolean;
 }) {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [bodyFontSize, setBodyFontSize] = useState(11);
+  const pagesContainerRef = React.useRef<HTMLDivElement>(null);
 
   // ── Inline format helpers ─────────────────────────────────────────────────
   const applyInlineFormat = (type: "bold" | "italic" | "underline") => {
@@ -640,7 +642,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
   return (
     <div style={{ flex: 1, display: "flex", overflow: "hidden", background: p.bg }}>
       {/* ── Pages area ── */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "28px 24px 48px" }}>
+      <div ref={pagesContainerRef} style={{ flex: 1, overflowY: "auto", padding: "28px 24px 48px" }}>
         {pages.map((pageSections, pi) => {
           // ── Cover page (first page) — dark green background ──
           if (pi === 0) {
@@ -652,7 +654,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
             const birthYear = birthInfo ? birthInfo.content.split(":").slice(1).join(":").trim() : "";
             const cream = "#E8E0D0";
             return (
-              <div key={pi} style={{
+              <div key={pi} data-proposal-page style={{
                 width: 620, minHeight: 877,
                 margin: "0 auto 28px",
                 background: p.brand, borderRadius: 2,
@@ -735,7 +737,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
 
           // ── Regular pages ──
           return (
-          <div key={pi} style={{
+          <div key={pi} data-proposal-page style={{
             width: 620, minHeight: 877,
             margin: "0 auto 28px",
             background: p.surface, borderRadius: 2,
@@ -756,11 +758,11 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
         {/* Action bar at end of document */}
         <div style={{ padding: "14px 0 24px", display: "flex", justifyContent: "center", gap: 10 }}>
           <button className="btn btn-ghost" onClick={onBack} style={{ fontSize: 13, color: "#4A5568" }}>← Back</button>
-          <button className="btn btn-ghost" onClick={onDownload} disabled={downloading}
+          <button className="btn btn-ghost" onClick={() => pagesContainerRef.current && onDownload(pagesContainerRef.current)} disabled={downloading}
             style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6, cursor: downloading ? "not-allowed" : "pointer", color: "#4A5568" }}>
-            {downloading ? <><SpinIcon /> Generating…</> : "Download .docx"}
+            {downloading ? <><SpinIcon /> Generating…</> : "Download .pdf"}
           </button>
-          <button className="btn" onClick={onFinalize} disabled={finalizing || downloading}
+          <button className="btn" onClick={() => pagesContainerRef.current && onFinalize(pagesContainerRef.current)} disabled={finalizing || downloading}
             style={{ fontSize: 13, fontWeight: 700, background: finalizing ? "#CBD5CE" : p.brand, color: "#fff", border: "none", display: "flex", alignItems: "center", gap: 6, cursor: (finalizing || downloading) ? "not-allowed" : "pointer" }}>
             {finalizing ? <><SpinIcon /> Saving…</> : "✓ Finalize & Save"}
           </button>
@@ -975,10 +977,10 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
     );
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (containerEl: HTMLElement) => {
     setDownloading(true);
     try {
-      await downloadProposalDocx(proposalSections, student.fullName);
+      await downloadProposalPdf(containerEl, student.fullName);
     } catch (err) {
       console.error("Download failed:", err);
     } finally {
@@ -986,7 +988,7 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
     }
   };
 
-  const handleFinalize = async () => {
+  const handleFinalize = async (containerEl: HTMLElement) => {
     setFinalizing(true);
     try {
       // Extract the three AI-generated sections by aiKey
@@ -1013,8 +1015,8 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
         });
       }
 
-      // Download the .docx after indexing
-      await downloadProposalDocx(proposalSections, student.fullName);
+      // Download the PDF after indexing
+      await downloadProposalPdf(containerEl, student.fullName);
     } catch (err) {
       console.error("Finalize failed:", err);
     } finally {
