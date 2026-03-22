@@ -453,20 +453,20 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
     );
 
     if (s.type === "subtitle") {
-      if (s.editable && activeSectionId === s.id) {
+      if (s.editable) {
         return (
           <input
             key={s.id}
-            autoFocus
             value={s.content}
             onChange={(e) => onChange(s.id, e.target.value)}
+            onFocus={() => setActiveSectionId(s.id)}
             onBlur={() => setActiveSectionId(null)}
-            style={{ fontSize: 20, fontWeight: 700, color: p.brand, marginBottom: 20, fontFamily: "'Be Vietnam Pro', sans-serif", border: `1.5px solid ${p.brand}`, borderRadius: 4, padding: "4px 8px", background: "transparent", outline: "none", width: "100%" }}
+            style={{ fontSize: 20, fontWeight: 700, color: p.brand, marginBottom: 20, fontFamily: "'Be Vietnam Pro', sans-serif", border: "none", background: "transparent", outline: "none", width: "100%", padding: 0, lineHeight: 1.25 }}
           />
         );
       }
       return (
-        <div key={s.id} onClick={() => s.editable && setActiveSectionId(s.id)} style={{ fontSize: 20, fontWeight: 700, color: p.brand, marginBottom: 20, fontFamily: "'Be Vietnam Pro', sans-serif", cursor: s.editable ? "text" : "default", lineHeight: 1.25 }}>
+        <div key={s.id} style={{ fontSize: 20, fontWeight: 700, color: p.brand, marginBottom: 20, fontFamily: "'Be Vietnam Pro', sans-serif", lineHeight: 1.25 }}>
           {s.content}
         </div>
       );
@@ -491,108 +491,87 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
 
     if (s.type === "h2") return (
       <div key={s.id} style={{ marginBottom: 60, marginTop: 4 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Be Vietnam Pro', sans-serif", color: "#173F36", lineHeight: 1.2 }}>
-          {s.content}
-        </div>
+        {s.editable ? (
+          <input
+            key={s.id}
+            value={s.content}
+            onChange={(e) => onChange(s.id, e.target.value)}
+            onFocus={() => setActiveSectionId(s.id)}
+            onBlur={() => setActiveSectionId(null)}
+            style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Be Vietnam Pro', sans-serif", color: "#173F36", lineHeight: 1.2, border: "none", background: "transparent", outline: "none", width: "100%", padding: 0 }}
+          />
+        ) : (
+          <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Be Vietnam Pro', sans-serif", color: "#173F36", lineHeight: 1.2 }}>
+            {s.content}
+          </div>
+        )}
       </div>
     );
 
-    // ── Editable body with AI generate button ─────────────────────────────
-    if (s.type === "body" && s.editable && s.aiKey) {
-      const isGen = generatingSection === s.id;
-      const isActive = activeSectionId === s.id;
+    if (s.type === "body" || s.type === "closing") {
+      // Strip leading Roman-numeral all-caps header that AI sometimes echoes (e.g. "**I. CHIẾN LƯỢC TỔNG THỂ**")
+      const cleanContent = (c: string) =>
+        c.replace(/^\*{0,2}[IVX]+\.[^\n]*\*{0,2}\s*/i, "").trimStart();
 
-      if (isActive || isGen) {
-        return (
-          <div key={s.id} style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
-            <textarea
-              data-sid={s.id}
-              value={s.content}
-              onChange={(e) => onChange(s.id, e.target.value)}
-              onFocus={() => setActiveSectionId(s.id)}
-              onBlur={() => setActiveSectionId(null)}
-              autoFocus={isActive}
-              style={{
-                flex: 1, width: "100%", minHeight: 540, fontSize: bodyFontSize, lineHeight: 1.85,
-                fontFamily: "'Be Vietnam Pro', sans-serif", resize: "none",
-                border: `1.5px solid ${p.brand}`, borderRadius: 4,
-                padding: "14px 16px",
-                background: isGen ? "#FAFCFB" : "transparent",
-                color: isGen ? p.inkLight : p.ink, outline: "none",
-              }}
-            />
-          </div>
-        );
-      }
-
-      // ── Read mode: rendered rich text, click to edit ─────────────────────
-      return (
-        <div
-          key={s.id}
-          onClick={() => setActiveSectionId(s.id)}
-          style={{ flex: 1, cursor: "text", position: "relative", minHeight: 480 }}
-        >
-          {renderBodyContent(s.content)}
-        </div>
-      );
-    }
-
-    if (s.type === "body") return (
-      <div key={s.id} style={{ marginBottom: 12 }}>{renderBodyContent(s.content)}</div>
-    );
-
-    if (s.type === "closing") {
-      const isActive = activeSectionId === s.id;
-      if (s.editable && isActive) {
+      if (s.editable) {
+        const isGen = generatingSection === s.id;
+        const displayValue = cleanContent(s.content);
         return (
           <textarea
             key={s.id}
             data-sid={s.id}
-            value={s.content}
+            value={displayValue}
             onChange={(e) => onChange(s.id, e.target.value)}
             onFocus={() => setActiveSectionId(s.id)}
-            autoFocus
+            onBlur={() => setActiveSectionId(null)}
             style={{
-              width: "100%", minHeight: 320, fontSize: bodyFontSize, lineHeight: 1.85,
-              fontFamily: "'Be Vietnam Pro', sans-serif", resize: "none",
-              border: `1.5px solid ${p.brand}`, borderRadius: 4,
-              padding: "14px 16px", background: "transparent", color: p.ink, outline: "none",
+              width: "100%", fontSize: bodyFontSize, lineHeight: 1.65,
+              fontFamily: bodyFont, fontWeight: 300,
+              border: "none", background: isGen ? "#FAFCFB" : "transparent",
+              padding: "0 0 0 1.2em", textIndent: "-1.2em",
+              outline: "none", resize: "none", overflow: "hidden",
+              color: isGen ? p.inkLight : p.ink,
+              flex: 1, minHeight: 0,
             }}
           />
         );
       }
       return (
-        <div key={s.id} onClick={() => s.editable && setActiveSectionId(s.id)} style={{ padding: "8px 0", cursor: s.editable ? "text" : "default" }}>
-          {renderBodyContent(s.content)}
-        </div>
+        <div key={s.id} style={{ marginBottom: 12 }}>{renderBodyContent(cleanContent(s.content))}</div>
       );
     }
 
-    if (s.type === "table" && s.tableData) return (
-      <table key={s.id} style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5, marginBottom: 10, marginTop: 4 }}>
-        <thead>
-          <tr>{s.tableData[0].map((cell, ci) => (
-            <th key={ci} style={{ background: p.brand, color: "#fff", padding: "6px 10px", textAlign: "left", fontWeight: 600, fontSize: 9.5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-              {cell}
-            </th>
-          ))}</tr>
-        </thead>
-        <tbody>
-          {s.tableData.slice(1).map((row, ri) => (
-            <tr key={ri} style={{ background: ri % 2 === 1 ? p.rowAlt : "transparent" }}>
-              {row.map((cell, ci) => (
-                <td key={ci} style={{ padding: "5px 10px", borderBottom: `1px solid ${p.line}`, color: ci === 0 ? p.ink : p.inkMed, fontWeight: ci === 0 ? 600 : 400, whiteSpace: "normal", wordBreak: "break-word" }}>
-                  {s.editable ? (
-                    <textarea value={cell} onChange={(e) => updateTableCell(s.id, ri + 1, ci, e.target.value)} rows={1}
-                      style={{ width: "100%", fontSize: 10.5, border: "none", background: "transparent", padding: 0, outline: "none", color: "inherit", fontFamily: "inherit", fontWeight: "inherit", resize: "none", overflow: "hidden", lineHeight: 1.4, fieldSizing: "content" as never }} />
-                  ) : cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+    if (s.type === "table" && s.tableData) {
+      const colWidths = ["23%", "20%", "57%"];
+      return (
+        <table key={s.id} style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5, marginBottom: 10, marginTop: 4, tableLayout: "fixed" }}>
+          <colgroup>
+            {s.tableData[0].map((_, ci) => <col key={ci} style={{ width: colWidths[ci] ?? "auto" }} />)}
+          </colgroup>
+          <thead>
+            <tr>{s.tableData[0].map((cell, ci) => (
+              <th key={ci} style={{ background: p.brand, color: "#fff", padding: "6px 10px", textAlign: "left", fontWeight: 600, fontSize: 9.5, letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                {cell}
+              </th>
+            ))}</tr>
+          </thead>
+          <tbody>
+            {s.tableData.slice(1).map((row, ri) => (
+              <tr key={ri} style={{ background: ri % 2 === 1 ? p.rowAlt : "transparent" }}>
+                {row.map((cell, ci) => (
+                  <td key={ci} style={{ padding: "5px 10px", borderBottom: `1px solid ${p.line}`, color: ci === 0 ? p.ink : p.inkMed, fontWeight: ci === 0 ? 600 : 400, whiteSpace: ci === 0 ? "nowrap" : "normal", wordBreak: ci === 0 ? "normal" : "break-word", overflowWrap: "break-word" }}>
+                    {s.editable ? (
+                      <textarea value={cell} onChange={(e) => updateTableCell(s.id, ri + 1, ci, e.target.value)} rows={1}
+                        style={{ width: "100%", fontSize: 10.5, border: "none", background: "transparent", padding: 0, outline: "none", color: "inherit", fontFamily: "inherit", fontWeight: "inherit", resize: "none", overflow: "hidden", lineHeight: 1.4, fieldSizing: "content" as never, whiteSpace: ci === 0 ? "nowrap" : "normal" }} />
+                    ) : cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
 
     return null;
   };
@@ -632,7 +611,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
             const cream = "#E8E0D0";
             return (
               <div key={pi} data-proposal-page style={{
-                width: 620, minHeight: 877,
+                width: 620, height: 877,
                 margin: "0 auto 28px",
                 background: p.brand, borderRadius: 2,
                 padding: "44px 56px 40px",
@@ -715,17 +694,27 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
           // ── Regular pages ──
           return (
           <div key={pi} data-proposal-page style={{
-            width: 620, minHeight: 877,
+            width: 620, height: 877,
             margin: "0 auto 28px",
             background: p.surface, borderRadius: 2,
             padding: "44px 56px 40px",
             boxShadow: "0 4px 24px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.07)",
             color: p.ink,
             display: "flex", flexDirection: "column",
+            overflow: "hidden",
           }}>
             <Letterhead />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "80%" }}>
-              {pageSections.map(renderSection)}
+            <div style={{ flex: 1, overflow: "hidden", minHeight: 0, display: "flex", flexDirection: "column" }}>
+              {pageSections.map((s) =>
+                s.type === "table"
+                  ? renderSection(s)
+                  : <div key={s.id} style={{
+                      maxWidth: "80%",
+                      ...(s.type === "body" || s.type === "closing"
+                        ? { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }
+                        : {}),
+                    }}>{renderSection(s)}</div>
+              )}
             </div>
             <PaperFooter page={pi + 1} />
           </div>
