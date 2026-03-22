@@ -302,17 +302,16 @@ function StarIcon() {
 function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, onGenerateSection, generatingSection, onFinalize, finalizing }: {
   sections: ProposalSection[];
   onChange: (id: string, content: string) => void;
-  onDownload: (containerEl: HTMLElement) => void;
+  onDownload: () => void;
   onBack: () => void;
   downloading: boolean;
   onGenerateSection: (aiKey: "section1" | "section2" | "section3", sectionId: string) => void;
   generatingSection: string | null;
-  onFinalize: (containerEl: HTMLElement) => void;
+  onFinalize: () => void;
   finalizing: boolean;
 }) {
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [bodyFontSize, setBodyFontSize] = useState(11);
-  const pagesContainerRef = React.useRef<HTMLDivElement>(null);
+  const [bodyFontSize, setBodyFontSize] = useState(12);
 
   // ── Inline format helpers ─────────────────────────────────────────────────
   const applyInlineFormat = (type: "bold" | "italic" | "underline") => {
@@ -418,21 +417,26 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
       }
       // Numbered sub-heading: "1. Tiêu đề", "**1. Nội dung**"  →  Heading 2: 13px Medium
       if (/^\*{0,2}\d+\.\s+\S/.test(trimmed)) return (
-        <div key={i} style={{ fontSize: 13, fontWeight: 500, fontFamily: bodyFont, color: p.ink, marginTop: 14, marginBottom: 3, lineHeight: 1.4 }}>{parseInline(line)}</div>
+        <div key={i} style={{ fontSize: 12, fontWeight: 500, fontFamily: bodyFont, color: p.ink, marginTop: 14, marginBottom: 3, lineHeight: 1.4 }}>{parseInline(line)}</div>
       );
       // Short all-caps-ish line (section banner like "LỚP 11 – TĂNG TỐC…")  →  Heading 2: 11px Medium
-      const hasLower = /[a-zàáâãèéêìíòóôõùúăđĩũơư]/.test(trimmed);
-      if (!hasLower && trimmed.length < 70 && !trimmed.startsWith("•")) return (
-        <div key={i} style={{ fontSize: 11, fontWeight: 500, fontFamily: bodyFont, color: p.inkMed, marginTop: 16, marginBottom: 4, letterSpacing: "0.04em" }}>{line}</div>
-      );
+      const stripped = trimmed.replace(/\*{1,2}/g, "");
+      const hasLower = /[a-zàáâãèéêìíòóôõùúăđĩũơư]/.test(stripped);
+      if (!hasLower && stripped.length > 0 && stripped.length < 70 && !stripped.startsWith("•")) {
+        // Skip Roman-numeral section titles — they duplicate the h2 heading
+        if (/^[IVX]+\.\s/.test(stripped)) return null;
+        return (
+          <div key={i} style={{ fontSize: 11, fontWeight: 500, fontFamily: bodyFont, color: p.inkMed, marginTop: 16, marginBottom: 4, letterSpacing: "0.04em" }}>{stripped}</div>
+        );
+      }
       // Bullet (• or -)  →  Body: bodyFontSize Regular
       if (trimmed.startsWith("• ") || trimmed.startsWith("- ")) return (
         <div key={i} style={{ display: "flex", gap: 7, marginBottom: 3, alignItems: "flex-start" }}>
           <span style={{ color: p.brand, fontSize: bodyFontSize, lineHeight: 1.65, flexShrink: 0 }}>•</span>
-          <span style={{ fontSize: bodyFontSize, lineHeight: 1.65, color: p.ink, fontFamily: bodyFont, fontWeight: 400 }}>{parseInline(trimmed.slice(2))}</span>
+          <span style={{ fontSize: bodyFontSize, lineHeight: 1.65, color: p.ink, fontFamily: bodyFont, fontWeight: 300 }}>{parseInline(trimmed.slice(2))}</span>
         </div>
       );
-      return <p key={i} style={{ fontSize: bodyFontSize, lineHeight: 1.65, color: p.ink, margin: "0 0 5px", fontFamily: bodyFont, fontWeight: 400 }}>{parseInline(line)}</p>;
+      return <p key={i} style={{ fontSize: bodyFontSize, lineHeight: 1.65, color: p.ink, margin: "0 0 5px", fontFamily: bodyFont, fontWeight: 300 }}>{parseInline(line)}</p>;
     });
   };
 
@@ -486,11 +490,10 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
     }
 
     if (s.type === "h2") return (
-      <div key={s.id} style={{ marginBottom: 16, marginTop: 4 }}>
-        <div style={{ fontSize: 16, fontWeight: 500, fontFamily: "'Be Vietnam Pro', sans-serif", color: p.brand, lineHeight: 1.2, marginBottom: 10 }}>
-          {s.content.replace(/^[IVX]+\.\s*/i, "")}
+      <div key={s.id} style={{ marginBottom: 60, marginTop: 4 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Be Vietnam Pro', sans-serif", color: "#173F36", lineHeight: 1.2 }}>
+          {s.content}
         </div>
-        <div style={{ height: 1, background: p.brand, opacity: 0.2 }} />
       </div>
     );
 
@@ -507,30 +510,17 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
               value={s.content}
               onChange={(e) => onChange(s.id, e.target.value)}
               onFocus={() => setActiveSectionId(s.id)}
+              onBlur={() => setActiveSectionId(null)}
               autoFocus={isActive}
               style={{
                 flex: 1, width: "100%", minHeight: 540, fontSize: bodyFontSize, lineHeight: 1.85,
                 fontFamily: "'Be Vietnam Pro', sans-serif", resize: "none",
                 border: `1.5px solid ${p.brand}`, borderRadius: 4,
-                padding: "14px 16px", paddingBottom: 44,
+                padding: "14px 16px",
                 background: isGen ? "#FAFCFB" : "transparent",
                 color: isGen ? p.inkLight : p.ink, outline: "none",
               }}
             />
-            <button
-              onClick={() => onGenerateSection(s.aiKey!, s.id)} disabled={isGen}
-              style={{
-                position: "absolute", bottom: 10, right: 10,
-                display: "flex", alignItems: "center", gap: 5,
-                fontSize: 10.5, fontWeight: 600, padding: "4px 10px",
-                borderRadius: 5, border: `1px solid ${isGen ? p.line : p.brand}`,
-                background: isGen ? p.surface : p.brand,
-                color: isGen ? p.inkLight : "#fff",
-                cursor: isGen ? "not-allowed" : "pointer",
-              }}
-            >
-              {isGen ? <><SpinIcon /> Generating…</> : <><StarIcon /> Generate with AI</>}
-            </button>
           </div>
         );
       }
@@ -540,22 +530,9 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
         <div
           key={s.id}
           onClick={() => setActiveSectionId(s.id)}
-          style={{ flex: 1, cursor: "text", position: "relative", minHeight: 480, paddingBottom: 40 }}
+          style={{ flex: 1, cursor: "text", position: "relative", minHeight: 480 }}
         >
           {renderBodyContent(s.content)}
-          <button
-            onClick={(e) => { e.stopPropagation(); onGenerateSection(s.aiKey!, s.id); }}
-            style={{
-              position: "absolute", bottom: 4, right: 0,
-              display: "flex", alignItems: "center", gap: 5,
-              fontSize: 10.5, fontWeight: 600, padding: "4px 10px",
-              borderRadius: 5, border: `1px solid ${p.brand}`,
-              background: "transparent", color: p.brand,
-              cursor: "pointer",
-            }}
-          >
-            <StarIcon /> Generate with AI
-          </button>
         </div>
       );
     }
@@ -642,7 +619,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
   return (
     <div style={{ flex: 1, display: "flex", overflow: "hidden", background: p.bg }}>
       {/* ── Pages area ── */}
-      <div ref={pagesContainerRef} style={{ flex: 1, overflowY: "auto", padding: "28px 24px 48px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "28px 24px 48px" }}>
         {pages.map((pageSections, pi) => {
           // ── Cover page (first page) — dark green background ──
           if (pi === 0) {
@@ -747,7 +724,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
             display: "flex", flexDirection: "column",
           }}>
             <Letterhead />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: 430 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "80%" }}>
               {pageSections.map(renderSection)}
             </div>
             <PaperFooter page={pi + 1} />
@@ -757,12 +734,12 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
 
         {/* Action bar at end of document */}
         <div style={{ padding: "14px 0 24px", display: "flex", justifyContent: "center", gap: 10 }}>
-          <button className="btn btn-ghost" onClick={onBack} style={{ fontSize: 13, color: "#4A5568" }}>← Back</button>
-          <button className="btn btn-ghost" onClick={() => pagesContainerRef.current && onDownload(pagesContainerRef.current)} disabled={downloading}
+          <button className="btn btn-ghost" onClick={onBack} style={{ fontSize: 13, color: "#4A5568" }}>← Back to Notes</button>
+          <button className="btn btn-ghost" onClick={onDownload} disabled={downloading}
             style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6, cursor: downloading ? "not-allowed" : "pointer", color: "#4A5568" }}>
             {downloading ? <><SpinIcon /> Generating…</> : "Download .pdf"}
           </button>
-          <button className="btn" onClick={() => pagesContainerRef.current && onFinalize(pagesContainerRef.current)} disabled={finalizing || downloading}
+          <button className="btn" onClick={onFinalize} disabled={finalizing || downloading}
             style={{ fontSize: 13, fontWeight: 700, background: finalizing ? "#CBD5CE" : p.brand, color: "#fff", border: "none", display: "flex", alignItems: "center", gap: 6, cursor: (finalizing || downloading) ? "not-allowed" : "pointer" }}>
             {finalizing ? <><SpinIcon /> Saving…</> : "✓ Finalize & Save"}
           </button>
@@ -831,15 +808,21 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
     profileStrategy: initialNote?.profileStrategy ?? "",
   });
 
+  const savedSections = (() => {
+    if (!initialNote?.report) return [];
+    try { return JSON.parse(initialNote.report) as ProposalSection[]; } catch { return []; }
+  })();
+
   const [generating, setGenerating] = useState<string | null>(null);
-  const [step, setStep] = useState<"input" | "preview">("input");
-  const [proposalSections, setProposalSections] = useState<ProposalSection[]>([]);
+  const [step, setStep] = useState<"input" | "preview">(savedSections.length > 0 ? "preview" : "input");
+  const [proposalSections, setProposalSections] = useState<ProposalSection[]>(savedSections);
   const [downloading, setDownloading] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
 
   const setField = (field: keyof NoteState) => (value: string) =>
     setNote((prev) => ({ ...prev, [field]: value }));
@@ -928,7 +911,6 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
   };
 
   const handleCreateProposal = async () => {
-    onSave(buildFull(), note.keyNotes);
     const currentGrade = student.level?.match(/\d+/)?.[0] || "11";
     // Show preview immediately with loading placeholders, then fill in AI content
     const placeholderSections = buildProposalSections({
@@ -943,8 +925,24 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
       section2: "Đang tạo nội dung…",
       section3: "Đang tạo nội dung…",
     });
+    const finalSections = [...placeholderSections];
     setProposalSections(placeholderSections);
     setStep("preview");
+
+    // Save note fields immediately (preserve any existing report)
+    onSave({ ...buildFull(), report: initialNote?.report ?? "" }, note.keyNotes);
+
+    // Helper: save current finalSections state to localStorage directly
+    const persist = (sections: ProposalSection[]) => {
+      const fullNote = { ...buildFull(), report: JSON.stringify(sections) };
+      onSave(fullNote, note.keyNotes);
+      // Also write directly to avoid stale closure on onSave
+      try {
+        const stored = JSON.parse(localStorage.getItem("elio:meetingNotes") ?? "{}");
+        stored[fullNote.meetingId] = fullNote;
+        localStorage.setItem("elio:meetingNotes", JSON.stringify(stored));
+      } catch { /* ignore */ }
+    };
 
     // Generate all three sections in parallel via Claude API
     const keys: ("section1" | "section2" | "section3")[] = ["section1", "section2", "section3"];
@@ -952,35 +950,46 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
       try {
         const content = await generateViaAPI(aiKey);
         setProposalSections(prev => prev.map(s => s.aiKey === aiKey ? { ...s, content } : s));
+        const idx = finalSections.findIndex(s => s.aiKey === aiKey);
+        if (idx >= 0) finalSections[idx] = { ...finalSections[idx], content };
       } catch {
         const fallback =
           aiKey === "section1" ? genSection1(student.fullName, student.studentInfo || "", student.issues ?? []) :
           aiKey === "section2" ? genSection2(student.fullName, student.studentInfo || "", note.school || student.school || "", note.keyNotes, currentGrade) :
           genSection3(student.fullName, note.targetSchools, note.intendedMajor);
         setProposalSections(prev => prev.map(s => s.aiKey === aiKey ? { ...s, content: fallback } : s));
+        const idx = finalSections.findIndex(s => s.aiKey === aiKey);
+        if (idx >= 0) finalSections[idx] = { ...finalSections[idx], content: fallback };
       }
+      // Save after each section completes so partial progress is preserved
+      persist(finalSections);
     }));
   };
 
   const handleSectionChange = (id: string, content: string) => {
-    setProposalSections((prev) =>
-      prev.map((s) => {
+    setProposalSections((prev) => {
+      const updated = prev.map((s) => {
         if (s.id !== id) return s;
-        // Table data encoded as JSON
         if (s.type === "table" && content.startsWith("[")) {
-          try {
-            return { ...s, tableData: JSON.parse(content) };
-          } catch { return s; }
+          try { return { ...s, tableData: JSON.parse(content) }; } catch { return s; }
         }
         return { ...s, content };
-      })
-    );
+      });
+      // Persist edit immediately
+      try {
+        const fullNote = { ...buildFull(), report: JSON.stringify(updated) };
+        const stored = JSON.parse(localStorage.getItem("elio:meetingNotes") ?? "{}");
+        stored[fullNote.meetingId] = fullNote;
+        localStorage.setItem("elio:meetingNotes", JSON.stringify(stored));
+      } catch { /* ignore */ }
+      return updated;
+    });
   };
 
-  const handleDownload = async (containerEl: HTMLElement) => {
+  const handleDownload = async () => {
     setDownloading(true);
     try {
-      await downloadProposalPdf(containerEl, student.fullName);
+      await downloadProposalPdf(proposalSections, student.fullName);
     } catch (err) {
       console.error("Download failed:", err);
     } finally {
@@ -988,7 +997,7 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
     }
   };
 
-  const handleFinalize = async (containerEl: HTMLElement) => {
+  const handleFinalize = async () => {
     setFinalizing(true);
     try {
       // Extract the three AI-generated sections by aiKey
@@ -1016,7 +1025,7 @@ export function CounselorNoteModal({ student, meeting, initialKeyNotes, initialN
       }
 
       // Download the PDF after indexing
-      await downloadProposalPdf(containerEl, student.fullName);
+      await downloadProposalPdf(proposalSections, student.fullName);
     } catch (err) {
       console.error("Finalize failed:", err);
     } finally {
