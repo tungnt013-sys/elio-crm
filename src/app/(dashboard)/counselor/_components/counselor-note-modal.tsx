@@ -371,7 +371,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
 
   // ── Per-page footer ───────────────────────────────────────────────────────
   const PaperFooter = ({ page }: { page: number }) => (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 36, paddingTop: 10, borderTop: `1px solid ${p.rule}` }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 20, paddingTop: 8, borderTop: `1px solid ${p.rule}` }}>
       <span style={{ fontSize: 8, fontStyle: "italic", color: p.inkLight, fontFamily: bodyFont, letterSpacing: "0.02em" }}>Một điểm đến, mọi bước đồng hành</span>
       <span style={{ fontSize: 8, color: p.inkLight, fontFamily: bodyFont }}>{page}</span>
     </div>
@@ -401,42 +401,43 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
     const lines = text.split("\n");
     return lines.map((line, i) => {
       const trimmed = line.trim();
-      if (!trimmed) return <div key={i} style={{ height: 8 }} />;
+      if (!trimmed) return <div key={i} style={{ height: 3 }} />;
       if (/^─{4,}/.test(trimmed)) return (
-        <div key={i} style={{ borderTop: `1px solid ${p.rule}`, margin: "10px 0" }} />
+        <div key={i} style={{ borderTop: `1px solid ${p.rule}`, margin: "8px 0" }} />
       );
-      // Markdown heading: "# Title" or "## Title" → render as styled heading, strip #
+      // Markdown heading: "# Title" or "## Title" → styled heading, strip #
       const hMatch = trimmed.match(/^(#{1,3})\s+(.+)/);
       if (hMatch) {
         const level = hMatch[1].length;
         const headingText = hMatch[2];
-        const hSize = level === 1 ? 16 : level === 2 ? 13 : 11;
+        // Skip Roman-numeral section titles — duplicate of h2
+        if (/^[IVX]+\.\s/i.test(headingText)) return null;
+        const hSize = level === 1 ? 14 : level === 2 ? 12 : 11;
         return (
-          <div key={i} style={{ fontSize: hSize, fontWeight: 500, fontFamily: bodyFont, color: level <= 2 ? p.brand : p.ink, marginTop: level === 1 ? 20 : 14, marginBottom: level === 1 ? 8 : 3, lineHeight: 1.3 }}>{parseInline(headingText)}</div>
+          <div key={i} style={{ fontSize: hSize, fontWeight: 600, fontFamily: bodyFont, color: level <= 2 ? p.brand : p.ink, marginTop: level === 1 ? 14 : 10, marginBottom: 2, lineHeight: 1.3 }}>{parseInline(headingText)}</div>
         );
       }
-      // Numbered sub-heading: "1. Tiêu đề", "**1. Nội dung**"  →  Heading 2: 13px Medium
+      // Numbered sub-heading: "1. Tiêu đề" → 12px SemiBold brand color
       if (/^\*{0,2}\d+\.\s+\S/.test(trimmed)) return (
-        <div key={i} style={{ fontSize: 12, fontWeight: 500, fontFamily: bodyFont, color: p.ink, marginTop: 14, marginBottom: 3, lineHeight: 1.4 }}>{parseInline(line)}</div>
+        <div key={i} style={{ fontSize: 12, fontWeight: 600, fontFamily: bodyFont, color: p.brand, marginTop: 8, marginBottom: 1, lineHeight: 1.3 }}>{parseInline(trimmed.replace(/^\*{1,2}|\*{1,2}$/g, ""))}</div>
       );
-      // Short all-caps-ish line (section banner like "LỚP 11 – TĂNG TỐC…")  →  Heading 2: 11px Medium
+      // Short all-caps line (e.g. "HỌC THUẬT & CHUẨN HÓA") → label style
       const stripped = trimmed.replace(/\*{1,2}/g, "");
       const hasLower = /[a-zàáâãèéêìíòóôõùúăđĩũơư]/.test(stripped);
       if (!hasLower && stripped.length > 0 && stripped.length < 70 && !stripped.startsWith("•")) {
-        // Skip Roman-numeral section titles — they duplicate the h2 heading
-        if (/^[IVX]+\.\s/.test(stripped)) return null;
+        if (/^[IVX]+\.\s/i.test(stripped)) return null;
         return (
-          <div key={i} style={{ fontSize: 11, fontWeight: 500, fontFamily: bodyFont, color: p.inkMed, marginTop: 16, marginBottom: 4, letterSpacing: "0.04em" }}>{stripped}</div>
+          <div key={i} style={{ fontSize: 10, fontWeight: 600, fontFamily: bodyFont, color: p.inkMed, marginTop: 6, marginBottom: 1, letterSpacing: "0.06em", textTransform: "uppercase" }}>{stripped}</div>
         );
       }
-      // Bullet (• or -)  →  Body: bodyFontSize Regular
+      // Bullet (• or -)  →  hanging indent with flex
       if (trimmed.startsWith("• ") || trimmed.startsWith("- ")) return (
-        <div key={i} style={{ display: "flex", gap: 7, marginBottom: 3, alignItems: "flex-start" }}>
-          <span style={{ color: p.brand, fontSize: bodyFontSize, lineHeight: 1.65, flexShrink: 0 }}>•</span>
-          <span style={{ fontSize: bodyFontSize, lineHeight: 1.65, color: p.ink, fontFamily: bodyFont, fontWeight: 300 }}>{parseInline(trimmed.slice(2))}</span>
+        <div key={i} style={{ display: "flex", gap: 6, marginBottom: 1, alignItems: "flex-start" }}>
+          <span style={{ color: p.brand, fontSize: bodyFontSize, lineHeight: 1.45, flexShrink: 0, marginTop: 1 }}>•</span>
+          <span style={{ fontSize: bodyFontSize, lineHeight: 1.45, color: p.ink, fontFamily: bodyFont, fontWeight: 300 }}>{parseInline(trimmed.slice(2))}</span>
         </div>
       );
-      return <p key={i} style={{ fontSize: bodyFontSize, lineHeight: 1.65, color: p.ink, margin: "0 0 5px", fontFamily: bodyFont, fontWeight: 300 }}>{parseInline(line)}</p>;
+      return <p key={i} style={{ fontSize: bodyFontSize, lineHeight: 1.45, color: p.ink, margin: "0 0 3px", fontFamily: bodyFont, fontWeight: 300 }}>{parseInline(line)}</p>;
     });
   };
 
@@ -490,7 +491,7 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
     }
 
     if (s.type === "h2") return (
-      <div key={s.id} style={{ marginBottom: 60, marginTop: 4 }}>
+      <div key={s.id} style={{ marginBottom: 16, marginTop: 0 }}>
         {s.editable ? (
           <input
             key={s.id}
@@ -509,35 +510,49 @@ function ProposalPreview({ sections, onChange, onDownload, onBack, downloading, 
     );
 
     if (s.type === "body" || s.type === "closing") {
-      // Strip leading Roman-numeral all-caps header that AI sometimes echoes (e.g. "**I. CHIẾN LƯỢC TỔNG THỂ**")
       const cleanContent = (c: string) =>
         c.replace(/^\*{0,2}[IVX]+\.[^\n]*\*{0,2}\s*/i, "").trimStart();
 
       if (s.editable) {
         const isGen = generatingSection === s.id;
+        const isActive = activeSectionId === s.id;
         const displayValue = cleanContent(s.content);
+
+        if (isActive || isGen) {
+          return (
+            <textarea
+              key={s.id}
+              data-sid={s.id}
+              value={displayValue}
+              onChange={(e) => onChange(s.id, e.target.value)}
+              onFocus={() => setActiveSectionId(s.id)}
+              onBlur={() => setActiveSectionId(null)}
+              autoFocus={isActive}
+              style={{
+                flex: 1, minHeight: 0, width: "100%",
+                fontSize: bodyFontSize, lineHeight: 1.5,
+                fontFamily: bodyFont, fontWeight: 300,
+                border: "none", background: isGen ? "#FAFCFB" : "transparent",
+                padding: 0, outline: "none", resize: "none", overflow: "hidden",
+                color: isGen ? p.inkLight : p.ink,
+              }}
+            />
+          );
+        }
         return (
-          <textarea
+          <div
             key={s.id}
-            data-sid={s.id}
-            value={displayValue}
-            onChange={(e) => onChange(s.id, e.target.value)}
-            onFocus={() => setActiveSectionId(s.id)}
-            onBlur={() => setActiveSectionId(null)}
-            style={{
-              width: "100%", fontSize: bodyFontSize, lineHeight: 1.65,
-              fontFamily: bodyFont, fontWeight: 300,
-              border: "none", background: isGen ? "#FAFCFB" : "transparent",
-              padding: "0 0 0 1.2em", textIndent: "-1.2em",
-              outline: "none", resize: "none", overflow: "hidden",
-              color: isGen ? p.inkLight : p.ink,
-              flex: 1, minHeight: 0,
-            }}
-          />
+            onClick={() => setActiveSectionId(s.id)}
+            style={{ flex: 1, overflow: "hidden", minHeight: 0, cursor: "text" }}
+          >
+            {renderBodyContent(displayValue)}
+          </div>
         );
       }
       return (
-        <div key={s.id} style={{ marginBottom: 12 }}>{renderBodyContent(cleanContent(s.content))}</div>
+        <div key={s.id} style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
+          {renderBodyContent(cleanContent(s.content))}
+        </div>
       );
     }
 
